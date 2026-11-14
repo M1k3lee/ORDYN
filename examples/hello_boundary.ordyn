@@ -1,0 +1,48 @@
+// Canonical ORDYN v0.1 Example: Secure Banking Transaction Entity
+
+capability NetConnect {
+    host: String;
+    port: Int;
+}
+
+capability AuditLog {
+    retention_days: Int;
+}
+
+interface PaymentProcessor {
+    fn process_charge(account_id: String, amount: Int) -> Result<String, String>
+        with [NetConnect, AuditLog];
+}
+
+entity BankAccount {
+    let account_id: String;
+    mut balance: Int;
+
+    pub fn deposit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.balance == old(self.balance) + amount
+    {
+        self.balance = self.balance + amount;
+        return Ok(self.balance);
+    }
+
+    pub fn withdraw(amount: Int) -> Result<Int, String>
+        requires amount > 0 && amount <= self.balance
+        ensures self.balance == old(self.balance) - amount
+    {
+        self.balance = self.balance - amount;
+        return Ok(self.balance);
+    }
+}
+
+boundary SecureBankingBoundary {
+    grant NetConnect { host: "api.payments.internal", port: 8443 };
+    grant AuditLog { retention_days: 365 };
+
+    quota {
+        memory_limit: 64;
+        fuel_limit: 500000;
+    }
+
+    bind BankAccount;
+}

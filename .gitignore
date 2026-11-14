@@ -1,0 +1,26 @@
+# ORDYN Build Artifacts
+target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test / Output Artifacts
+*.wasm
+*.wat
+*.ordyn-bin
+*.ordyn-manifest
+dist/
+build/
+.temp/
+
+# OS-generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

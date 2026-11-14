@@ -1,0 +1,11 @@
+[package]
+name = "ordyn-lexer"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ordyn-diagnostics = { path = "../ordyn-diagnostics" }
+thiserror.workspace = true
+miette.workspace = true

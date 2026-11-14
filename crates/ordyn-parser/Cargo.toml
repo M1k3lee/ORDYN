@@ -1,0 +1,13 @@
+[package]
+name = "ordyn-parser"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ordyn-diagnostics = { path = "../ordyn-diagnostics" }
+ordyn-ast = { path = "../ordyn-ast" }
+ordyn-lexer = { path = "../ordyn-lexer" }
+thiserror.workspace = true
+miette.workspace = true

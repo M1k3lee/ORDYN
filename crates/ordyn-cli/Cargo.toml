@@ -1,0 +1,19 @@
+[package]
+name = "ordyn-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "ordyn"
+path = "src/main.rs"
+
+[dependencies]
+ordyn-diagnostics = { path = "../ordyn-diagnostics" }
+ordyn-ast = { path = "../ordyn-ast" }
+ordyn-lexer = { path = "../ordyn-lexer" }
+ordyn-parser = { path = "../ordyn-parser" }
+clap.workspace = true
+miette.workspace = true
+thiserror.workspace = true
