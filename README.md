@@ -60,6 +60,7 @@ ORDYN organizes systems around six primary language constructs:
 │   │   └── KNOWN_LIMITATIONS.md
 │   ├── security/
 │   │   ├── THREAT_MODEL.md
+│   │   ├── FORMAL_ENGINEERING_RISK_ASSESSMENT.md
 │   │   ├── SECURITY_TESTS.md
 │   │   └── VERIFICATION_STATUS.md
 │   └── contributing/
@@ -88,3 +89,4 @@ ORDYN organizes systems around six primary language constructs:
 - [Implementation Status](file:///c:/Users/mike/ORDYN/docs/development/IMPLEMENTATION_STATUS.md)
 - [Architecture Decisions (ADRs)](file:///c:/Users/mike/ORDYN/docs/development/DECISIONS.md)
 - [Threat Model](file:///c:/Users/mike/ORDYN/docs/security/THREAT_MODEL.md)
+- [Formal Engineering Risk Assessment](file:///c:/Users/mike/ORDYN/docs/security/FORMAL_ENGINEERING_RISK_ASSESSMENT.md)

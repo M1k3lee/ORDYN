@@ -35,3 +35,9 @@ flowchart TD
 | **Information Disclosure** | Data leakage from confidential state to public sinks. | Static information-flow lattice analysis ($\text{Public} \sqsubseteq \text{Internal} \sqsubseteq \text{Confidential} \sqsubseteq \text{Restricted}$) prevents implicit declassification. |
 | **Denial of Service** | Infinite loops, recursion bombs, memory exhaustion. | WASM instruction fuel limits terminate runaway executions deterministically; strict memory allocation ceilings. |
 | **Elevation of Privilege** | Code escaping sandbox to make direct host OS calls. | Zero ambient authority; WASM imports only expose audited `ordyn_kernel_*` interfaces. |
+
+---
+
+## 3. Detailed Formal Engineering Risk Assessment
+For comprehensive mathematical definitions of contract verification, capability attenuation lattices, WASM execution strategies, side-channel threat analysis, TCB inventory, and supply-chain guarantees, see:
+- [Formal Engineering Risk Assessment](file:///c:/Users/mike/ORDYN/docs/security/FORMAL_ENGINEERING_RISK_ASSESSMENT.md)
