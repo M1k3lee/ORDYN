@@ -14,6 +14,7 @@ ordyn-diagnostics = { path = "../ordyn-diagnostics" }
 ordyn-ast = { path = "../ordyn-ast" }
 ordyn-lexer = { path = "../ordyn-lexer" }
 ordyn-parser = { path = "../ordyn-parser" }
+ordyn-types = { path = "../ordyn-types" }
 clap.workspace = true
 miette.workspace = true
 thiserror.workspace = true

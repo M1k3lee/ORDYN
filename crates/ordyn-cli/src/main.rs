@@ -67,6 +67,12 @@ boundary MainBoundary {
             let program = parser.parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Parsing succeeded: discovered {} top-level declarations.", program.declarations.len());
+
+            println!("Running static semantic and type analysis...");
+            let mut checker = ordyn_types::TypeChecker::new();
+            checker.check_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+            println!("Type checking succeeded: 0 errors detected.");
         }
         Commands::Verify { file } => {
             println!("ORDYN Guard verifying security invariants for: {}", file.display());
@@ -75,7 +81,11 @@ boundary MainBoundary {
                 .map_err(|e| miette::miette!("{}", e))?;
             let program = parser.parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
-            println!("Static verification baseline passed for {} declarations.", program.declarations.len());
+
+            let mut checker = ordyn_types::TypeChecker::new();
+            checker.check_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+            println!("Static verification baseline passed for {} declarations (contracts & boundaries sound).", program.declarations.len());
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");

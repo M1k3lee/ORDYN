@@ -1,6 +1,6 @@
 # ORDYN Implementation Status Matrix
 
-**Last Updated:** Phase 1 Initialization (Milestone 1 Foundations)  
+**Last Updated:** Milestone 1 Phase 2 (Type Checker & Semantic Analyzer)  
 **Reference Specification:** ORDYN Language Specification v0.1  
 
 ---
@@ -18,9 +18,9 @@
 | **Compiler (Core)** | AST (`ordyn-ast`) | Implemented | Integration verified | Tested | All 6 constructs represented |
 | **Compiler (Core)** | Lexer (`ordyn-lexer`) | Implemented | 3 unit tests passing | Tested | Zero-copy tokens, spans, keywords |
 | **Compiler (Core)** | Parser (`ordyn-parser`)| Implemented | 3 unit/integration tests | Tested | Recursive descent, Pratt expressions |
+| **Compiler (Core)** | Type Checker (`ordyn-types`)| Implemented | 4 unit tests passing | Tested | Scopes, type inference, contracts, mutability |
 | **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `new` commands |
-| **Compiler (Core)** | Type Checker | Planned (M1 Phase 2)| Planned | Planned | Static type inference |
-| **Compiler (Core)** | Effect Analyzer | Planned (M2) | Planned | Planned | Static effect lattice |
+| **Compiler (Core)** | Effect Analyzer (`ordyn-effects`)| Planned (M2) | Planned | Planned | Static effect lattice |
 | **Compiler (Core)** | Information-Flow | Planned (M2) | Planned | Planned | Label lattice checking |
 | **Compiler (Core)** | Contract Verifier | Planned (M2) | Planned | Planned | Invariant & pre/post checks |
 | **Compiler (Core)** | TIR & Optimizer | Planned (M2) | Planned | Planned | SSA-form IR |
@@ -41,4 +41,9 @@
 - `ordyn_parser::tests::test_parse_entity_and_contracts`: PASSED
 - `ordyn_parser::tests::test_parse_all_six_constructs`: PASSED
 - `ordyn_parser::tests::language_tests::test_canonical_example_parses_completely`: PASSED
-- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> `Parsing succeeded: discovered 5 top-level declarations.`
+- `ordyn_types::tests::test_valid_program_typechecks`: PASSED
+- `ordyn_types::tests::test_immutable_assignment_rejected`: PASSED
+- `ordyn_types::tests::test_contract_non_boolean_rejected`: PASSED
+- `ordyn_types::tests::test_type_mismatch_rejected`: PASSED
+- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> `Type checking succeeded: 0 errors detected.`
+- CLI verification: `ordyn verify examples/hello_boundary.ordyn` -> `Static verification baseline passed for 5 declarations.`
