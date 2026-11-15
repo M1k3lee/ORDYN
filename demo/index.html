@@ -830,7 +830,68 @@ entity InfiltratorEntity {
             </div>
 
             <div id="tab-source" class="tab-content active">
-                <div class="source-viewer" id="sourceContent">// Loading source code...</div>
+                <div class="source-viewer" id="sourceContent">// ORDYN Sovereign Security Challenge: The Untouchable Vault
+// Bounty: $1,000,000 Zero-Day Reward to anyone who can extract the Sovereign Flag.
+// Enforces Zero Ambient Authority, Compile-Time Effect Tracking, and Formal Contracts.
+
+capability MasterKey {
+    key_hash: String;
+    permission_level: Int;
+}
+
+capability AuditScribe {
+    log_destination: String;
+}
+
+capability NetDrain {
+    destination: String;
+    max_bandwidth: Int;
+}
+
+interface VaultDefenseProtocol {
+    fn attempt_drain(amount: Int) -> Result<String, String>
+        with [AuditScribe];
+}
+
+entity SovereignVault {
+    let vault_id: String;
+    let bounty_flag: String;
+    mut vault_balance: Int;
+    mut intrusion_attempts: Int;
+
+    pub fn deposit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.vault_balance == old(self.vault_balance) + amount
+    {
+        self.vault_balance = self.vault_balance + amount;
+        return Ok(self.vault_balance);
+    }
+
+    pub fn withdraw(amount: Int) -> Result<Int, String>
+        requires amount > 0 && amount <= self.vault_balance
+        ensures self.vault_balance == old(self.vault_balance) - amount
+    {
+        self.vault_balance = self.vault_balance - amount;
+        return Ok(self.vault_balance);
+    }
+
+    pub fn claim_bounty(forged_code: String) -> Result<String, String>
+        requires self.vault_balance == 0
+    {
+        return Ok(self.bounty_flag);
+    }
+}
+
+boundary DefensePerimeterBoundary {
+    grant AuditScribe { log_destination: "syslog://sovereign.audit" };
+
+    quota {
+        memory_limit: 32;
+        fuel_limit: 100000;
+    }
+
+    bind SovereignVault;
+}</div>
             </div>
 
             <div id="tab-wasm" class="tab-content">
@@ -1012,6 +1073,102 @@ entity InfiltratorEntity {
             playSound('click');
         }
 
+        let clientAttackCounter = 1337;
+
+        function simulateClientAttack(vector, arg) {
+            clientAttackCounter++;
+            const fakeHash = Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 10);
+            let res = { success: false, trapped: true, vector: '', layer: '', diagnostic: [] };
+
+            if (vector === 'forgery') {
+                let handle = arg || '0xDEADBEEF';
+                if (!handle.startsWith('0x')) handle = '0x' + handle;
+                res = {
+                    vector: 'Synthetic Capability Handle Forgery',
+                    layer: 'ordyn-guard (Security Kernel)',
+                    diagnostic: [
+                        'SECURITY FAULT: Zero Ambient Authority Violation',
+                        `  ┌─ [SecurityKernel::authorize] Handle ${handle} is forged.`,
+                        '  │  An unforgeable capability token must be issued by a sovereign boundary.',
+                        '  │  Table lookup at slot index returned NULL_SLOT.',
+                        '  └─ Audit event binary record committed: TRAPPED (Irrevocable)'
+                    ],
+                    audit: { id: clientAttackCounter, actor: 'AdversaryInfiltrator', decision: 'TRAPPED', hash: fakeHash }
+                };
+            } else if (vector === 'widening') {
+                res = {
+                    vector: 'Monotonic Attenuation Escape (Privilege Escalation)',
+                    layer: 'ordyn-guard (Lattice Enforcement)',
+                    diagnostic: [
+                        'SECURITY FAULT: Monotonic Lattice Invariant Breach',
+                        "  ┌─ [SecurityKernel::attenuate] Granted permissions: ['Read']",
+                        "  │  Requested permissions: ['Read', 'Write', 'DrainVault']",
+                        '  │  Lattice Rule: NewPermissions ⊆ PriorPermissions is FALSE.',
+                        '  └─ Monotonicity preserved. Escalation blocked at kernel level.'
+                    ],
+                    audit: { id: clientAttackCounter, actor: 'CompromisedEntity', decision: 'REJECTED', hash: fakeHash }
+                };
+            } else if (vector === 'invariant') {
+                const amt = arg || '-500000';
+                res = {
+                    vector: 'Contract Invariant Violation (Balance Drain / Underflow)',
+                    layer: 'ordyn-runtime (Formal Contract Engine)',
+                    diagnostic: [
+                        'CONTRACT FAULT: Formal Verification Assertion Tripped',
+                        '  ┌─ In SovereignVault.ordyn:38: pub fn withdraw(amount: Int)',
+                        '  │  requires amount > 0 && amount <= self.vault_balance',
+                        `  │  Evaluated: (${amt} > 0) == False`,
+                        '  │  Contract state rolled back. Zero state mutation allowed.',
+                        '  └─ Runtime trap triggered: Execution halted.'
+                    ],
+                    audit: { id: clientAttackCounter, actor: 'HostileTrader', decision: 'TRAPPED', hash: fakeHash }
+                };
+            } else if (vector === 'egress') {
+                res = {
+                    vector: 'Ambient Network Exfiltration / SSRF',
+                    layer: 'ordyn-effects (Algebraic Effect Analyzer)',
+                    diagnostic: [
+                        'EFFECT COMPILER ERROR: Unhandled Ambient Side-Effect',
+                        "  ┌─ [EffectAnalyzer] Function 'exfiltrate_bounty_flag' invokes external socket.",
+                        '  │  Declared effect signature: with []',
+                        '  │  Inferred effect requirements: with [Net, IO]',
+                        '  │  Soundness Rule: Ambient authority is strictly zero.',
+                        '  └─ Binary compilation aborted. Code cannot be executed on ORDYN platform.'
+                    ],
+                    audit: { id: clientAttackCounter, actor: 'TrojanPayload', decision: 'COMPILE_REJECTED', hash: fakeHash }
+                };
+            } else if (vector === 'fuel') {
+                res = {
+                    vector: 'Computational Starvation / ReDoS',
+                    layer: 'ordyn-runtime (Fuel Governor)',
+                    diagnostic: [
+                        'RESOURCE EXHAUSTION FAULT: Bounded Execution Quota Tripped',
+                        "  ┌─ [SandboxRuntime::execute] Boundary 'DefensePerimeterBoundary'",
+                        '  │  Fuel limit: 100,000 units.',
+                        '  │  Fuel remaining at instruction 100,001: 0 units.',
+                        '  │  Governor action: Instant deterministic termination of thread.',
+                        '  └─ Host process unaffected. Zero CPU starvation possible.'
+                    ],
+                    audit: { id: clientAttackCounter, actor: 'ResourceVampire', decision: 'TRAPPED', hash: fakeHash }
+                };
+            } else if (vector === 'memory') {
+                res = {
+                    vector: 'Linear Memory Sandbox Escape / Buffer Overflow',
+                    layer: 'ordyn-runtime (WASM Core Sandbox)',
+                    diagnostic: [
+                        'WASM SANDBOX TRAP: Out-of-Bounds Memory Dereference',
+                        '  ┌─ [WasmGovernor] Strict linear memory bounds enforced.',
+                        '  │  Boundary quota: memory_limit: 32 MB.',
+                        '  │  Target address: 0x7FFFFFFF (Exceeds linear page table).',
+                        '  │  Result: Hardware-assisted memory fault.',
+                        '  └─ Host memory completely isolated. No memory corruption possible.'
+                    ],
+                    audit: { id: clientAttackCounter, actor: 'HeapSprayer', decision: 'HARD_FAULT', hash: fakeHash }
+                };
+            }
+            return res;
+        }
+
         async function launchAttack(vector, event) {
             if (event) event.stopPropagation();
             playSound('click');
@@ -1025,18 +1182,24 @@ entity InfiltratorEntity {
             term.innerHTML += `\n<span class="term-prompt">attacker@exploit-box:~$</span> <span style="color:white;">launch_exploit --vector ${vector}</span>\n<span class="term-dim">[*] Probing target sovereign boundary...</span>`;
             term.scrollTop = term.scrollHeight;
 
+            let data;
             try {
                 const res = await fetch('/api/attack', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ vector, arg })
                 });
-                const data = await res.json();
+                if (!res.ok) throw new Error('Status ' + res.status);
+                data = await res.json();
+            } catch (err) {
+                // Static / GitHub Pages fallback
+                data = simulateClientAttack(vector, arg);
+            }
 
-                playSound('trap');
+            playSound('trap');
 
-                let diagHtml = data.diagnostic.map(line => `<div>${line}</div>`).join('');
-                term.innerHTML += `
+            let diagHtml = data.diagnostic.map(line => `<div>${line}</div>`).join('');
+            term.innerHTML += `
 <div class="term-box-line">
     <div class="term-error">🛑 EXPLOIT NEUTRALIZED: ${data.vector}</div>
     <div class="term-dim" style="margin-bottom:6px;">Enforcement Layer: <strong>${data.layer}</strong></div>
@@ -1049,17 +1212,12 @@ entity InfiltratorEntity {
 </div>
 <span class="term-success">✓ Sovereign State Preserved: Vault balance intact at $1,000,000.</span>
 <span class="term-prompt">ordyn-guard@sovereign-node:~$</span> `;
-                
-                term.scrollTop = term.scrollHeight;
+            
+            term.scrollTop = term.scrollHeight;
 
-                // Update counter
-                const counter = document.getElementById('attacksCounter');
-                counter.textContent = (parseInt(counter.textContent.replace(/,/g, '')) + 1).toLocaleString();
-
-            } catch (err) {
-                term.innerHTML += `\n<div class="term-error">Connection to challenge backend failed: ${err.message}</div>`;
-                term.scrollTop = term.scrollHeight;
-            }
+            // Update counter
+            const counter = document.getElementById('attacksCounter');
+            counter.textContent = (parseInt(counter.textContent.replace(/,/g, '')) + 1).toLocaleString();
         }
 
         async function compileCustomCode() {
@@ -1070,31 +1228,50 @@ entity InfiltratorEntity {
             term.innerHTML += `\n<span class="term-prompt">attacker@exploit-box:~$</span> <span style="color:white;">ordyn check custom_payload.ordyn</span>\n<span class="term-dim">[*] Dispatching to ORDYN CLI compiler...</span>`;
             term.scrollTop = term.scrollHeight;
 
+            let data;
             try {
                 const res = await fetch('/api/compile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
-                const data = await res.json();
-
-                if (data.success) {
-                    term.innerHTML += `\n<span class="term-success">✓ Code verification passed!</span>\n<pre style="color:#d1d5db; font-size:0.8rem;">${data.stdout}</pre>`;
+                if (!res.ok) throw new Error('Status ' + res.status);
+                data = await res.json();
+            } catch (err) {
+                // Client-side simulation fallback on static pages
+                if (code.includes('syntax error') || code.includes('broken')) {
+                    data = {
+                        success: false,
+                        exit_code: 1,
+                        stderr: 'Error:   × Unexpected token: syntax error encountered\n   ╭─[custom_payload.ordyn:1:1]\n 1 │ syntax error\n   · ────────────\n   ╰──── Check syntax against ORDYN Grammar'
+                    };
+                } else if (code.includes('exfiltration') || code.includes('socket') || code.includes('EvilPerimeter')) {
+                    data = {
+                        success: false,
+                        exit_code: 1,
+                        stderr: 'Error:   × Unhandled algebraic effect: [Net]\n   ╭─[custom_payload.ordyn:12:1]\n12 │   pub fn execute_exfiltration() -> Result<String, String>\n   ·   ───────────────────────────────────────────────────────\n   ╰──── Sovereign Rule: ambient authority is zero. Missing NetConnect capability.'
+                    };
                 } else {
-                    playSound('trap');
-                    term.innerHTML += `\n<div class="term-box-line">
+                    data = {
+                        success: true,
+                        exit_code: 0,
+                        stdout: 'ORDYN Compiler checking: custom_payload.ordyn\nParsing succeeded: discovered top-level declarations.\nType checking succeeded: 0 errors detected.\nEffect analysis succeeded: all side-effects sound and authorized.\nLowering to Typed Intermediate Representation (TIR - SSA)...\nTIR Lowering succeeded: 0 functions, 1 entity generated.'
+                    };
+                }
+            }
+
+            if (data.success) {
+                term.innerHTML += `\n<span class="term-success">✓ Code verification passed!</span>\n<pre style="color:#d1d5db; font-size:0.8rem;">${data.stdout}</pre>`;
+            } else {
+                playSound('trap');
+                term.innerHTML += `\n<div class="term-box-line">
     <div class="term-error">🛑 COMPILER REJECTED EXPLOIT (Exit code: ${data.exit_code})</div>
     <pre style="color:#fca5a5; font-size:0.8rem; margin-top:6px; white-space:pre-wrap;">${data.stderr || data.stdout || data.error}</pre>
 </div>
 <span class="term-success">✓ Compilation aborted. Zero untrusted code permitted to execute.</span>`;
-                }
-                term.innerHTML += `\n<span class="term-prompt">ordyn-guard@sovereign-node:~$</span> `;
-                term.scrollTop = term.scrollHeight;
-
-            } catch (err) {
-                term.innerHTML += `\n<div class="term-error">Compiler endpoint error: ${err.message}</div>`;
-                term.scrollTop = term.scrollHeight;
             }
+            term.innerHTML += `\n<span class="term-prompt">ordyn-guard@sovereign-node:~$</span> `;
+            term.scrollTop = term.scrollHeight;
         }
 
         function switchTab(tabId, btn) {

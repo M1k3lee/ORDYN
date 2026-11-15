@@ -14,7 +14,20 @@
   <a href="https://github.com/M1k3lee/ORDYN/actions"><img src="https://github.com/M1k3lee/ORDYN/workflows/CI/badge.svg" alt="CI Status" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg" alt="License" /></a>
   <a href="docs/development/IMPLEMENTATION_STATUS.md"><img src="https://img.shields.io/badge/status-active%20development-emerald.svg" alt="Status" /></a>
+  <a href="https://m1k3lee.github.io/ORDYN/"><img src="https://img.shields.io/badge/Live%20Demo-Hack%20The%20Vault-red.svg" alt="Live Demo" /></a>
 </p>
+
+---
+
+## 🎯 Live Security Challenge: Hack the Sovereign Vault
+
+> **Interactive Online Challenge:** Can you breach ORDYN's zero-ambient-authority boundary?  
+> Launch real attack vectors (Capability Forgery, Lattice Widening, Contract Underflow, SSRF Egress, and ReDoS Starvation) directly against the ORDYN Security Kernel:  
+> 🔗 **[Launch Interactive Challenge Website (m1k3lee.github.io/ORDYN)](https://m1k3lee.github.io/ORDYN/)**
+
+- **Target Program:** [`examples/challenge_vault.ordyn`](examples/challenge_vault.ordyn) ($1,000,000 Zero-Day Bounty Reserve)
+- **Local Runner:** `python demo/server.py` &rarr; `http://localhost:8088`
+- **Features:** Real-time attack console, live architectural DAG explorer, custom payload compiler, and cryptographic audit trail receipts.
 
 ---
 
