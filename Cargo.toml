@@ -11,6 +11,8 @@ members = [
     "crates/ordyn-runtime",
     "crates/ordyn-stdlib",
     "crates/ordyn-forge",
+    "crates/ordyn-red-lab",
+    "crates/ordyn-lsp",
     "crates/ordyn-cli",
 ]
 resolver = "2"

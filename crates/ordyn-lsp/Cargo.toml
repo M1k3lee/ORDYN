@@ -1,0 +1,15 @@
+[package]
+name = "ordyn-lsp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ordyn-diagnostics = { path = "../ordyn-diagnostics" }
+ordyn-ast = { path = "../ordyn-ast" }
+ordyn-parser = { path = "../ordyn-parser" }
+ordyn-types = { path = "../ordyn-types" }
+ordyn-effects = { path = "../ordyn-effects" }
+thiserror.workspace = true
+miette.workspace = true

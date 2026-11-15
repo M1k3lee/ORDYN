@@ -1,6 +1,6 @@
 # ORDYN Implementation Status Matrix
 
-**Last Updated:** Milestone 6 (Developer Tooling, Packaging & ORDYN Forge)  
+**Last Updated:** Milestone 8 (Security Validation & Full Ecosystem Delivery)  
 **Reference Specification:** ORDYN Language Specification v0.1  
 
 ---
@@ -29,12 +29,14 @@
 | **Standard Library**| Transactional Storage (`ordyn-stdlib`)| Implemented | 2 unit tests passing | Tested | ACID commit/rollback, capability checks |
 | **Standard Library**| HTTP Transport (`ordyn-stdlib`)| Implemented | 1 unit test passing | Tested | Capability-checked request dispatch |
 | **Package & Forge** | Packaging & Forge (`ordyn-forge`)| Implemented | 2 unit tests passing | Tested | Zero ambient authority on dependencies |
+| **Language Server** | Language Service (`ordyn-lsp`)| Implemented | 3 unit tests passing | Tested | Diagnostics, document symbols, hover tooltips |
+| **Red Lab Validation**| Adversarial Tests (`ordyn-red-lab`)| Implemented | 4 unit tests passing | Tested | Forgery, widening, egress, invariant bypass attacks |
 | **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `package`, `inspect`, `new` |
 | **Applications** | Secure Banking Service | Implemented | End-to-end verified | Tested | `examples/secure_banking_service.ordyn` |
 
 ---
 
-## 2. Test Evidence Log (22 Automated Tests Passing)
+## 2. Test Evidence Log (29 Automated Tests Passing)
 
 - `ordyn_lexer::tests::test_lex_basic_tokens`: PASSED
 - `ordyn_lexer::tests::test_lex_keywords_and_symbols`: PASSED
@@ -61,8 +63,15 @@
 - `ordyn_stdlib::tests::test_http_dispatch_capability_check`: PASSED
 - `ordyn_forge::tests::test_forge_enforces_zero_ambient_authority_on_dependencies`: PASSED
 - `ordyn_forge::tests::test_package_builder_and_inspector`: PASSED
+- `ordyn_lsp::tests::test_lsp_diagnostics_on_clean_document`: PASSED
+- `ordyn_lsp::tests::test_lsp_diagnostics_catches_type_and_effect_errors`: PASSED
+- `ordyn_lsp::tests::test_lsp_document_symbols_extraction`: PASSED
+- `ordyn_red_lab::tests::red_lab_test_capability_forgery_is_trapped`: PASSED
+- `ordyn_red_lab::tests::red_lab_test_authority_expansion_attacks_are_blocked`: PASSED
+- `ordyn_red_lab::tests::red_lab_test_unauthorized_network_egress_is_caught_at_compile_time`: PASSED
+- `ordyn_red_lab::tests::red_lab_test_contract_violation_triggers_runtime_trap`: PASSED
 - CLI verification: `ordyn check examples/secure_banking_service.ordyn` -> PASSED
 - CLI verification: `ordyn build examples/secure_banking_service.ordyn` -> PASSED
 - CLI verification: `ordyn run examples/secure_banking_service.ordyn --function deposit --arg 250` -> PASSED
-- CLI verification: `ordyn package examples/secure_banking_service.ordyn` -> Generated `examples/secure_banking_service.ordyn-pkg`
+- CLI verification: `ordyn package examples/secure_banking_service.ordyn` -> PASSED
 - CLI verification: `ordyn inspect examples/secure_banking_service.ordyn-pkg` -> PASSED
