@@ -1,5 +1,5 @@
-use ordyn_ast::*;
 use miette::Diagnostic;
+use ordyn_ast::*;
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -188,7 +188,11 @@ impl IrLowerer {
         Ok(module)
     }
 
-    fn lower_function(&mut self, func: &FunctionDecl, entity_name: Option<&str>) -> Result<IrFunction, IrError> {
+    fn lower_function(
+        &mut self,
+        func: &FunctionDecl,
+        entity_name: Option<&str>,
+    ) -> Result<IrFunction, IrError> {
         self.next_reg = 0;
         self.blocks.clear();
         self.current_instructions.clear();
@@ -273,10 +277,15 @@ impl IrLowerer {
                 match target {
                     Expr::Ident(id) => {
                         if let Some(&reg) = self.var_map.get(&id.name) {
-                            self.current_instructions.push(Instruction::Assign(reg, val_op));
+                            self.current_instructions
+                                .push(Instruction::Assign(reg, val_op));
                         }
                     }
-                    Expr::FieldAccess { target: inner_target, field, .. } => {
+                    Expr::FieldAccess {
+                        target: inner_target,
+                        field,
+                        ..
+                    } => {
                         let target_op = self.lower_expr(inner_target)?;
                         self.current_instructions.push(Instruction::StoreField {
                             target: target_op,
@@ -318,19 +327,23 @@ impl IrLowerer {
                     Ok(Operand::ConstString(id.name.clone()))
                 }
             }
-            Expr::Binary { left, op, right, .. } => {
+            Expr::Binary {
+                left, op, right, ..
+            } => {
                 let left_op = self.lower_expr(left)?;
                 let right_op = self.lower_expr(right)?;
                 let dest = self.alloc_reg();
                 let ir_op = map_binary_op(*op);
-                self.current_instructions.push(Instruction::Binary(dest, ir_op, left_op, right_op));
+                self.current_instructions
+                    .push(Instruction::Binary(dest, ir_op, left_op, right_op));
                 Ok(Operand::Reg(dest))
             }
             Expr::Unary { op, operand, .. } => {
                 let op_val = self.lower_expr(operand)?;
                 let dest = self.alloc_reg();
                 let ir_op = map_unary_op(*op);
-                self.current_instructions.push(Instruction::Unary(dest, ir_op, op_val));
+                self.current_instructions
+                    .push(Instruction::Unary(dest, ir_op, op_val));
                 Ok(Operand::Reg(dest))
             }
             Expr::Call { callee, args, .. } => {
@@ -346,7 +359,8 @@ impl IrLowerer {
                 };
 
                 let dest = self.alloc_reg();
-                self.current_instructions.push(Instruction::Call(Some(dest), callee_name, arg_ops));
+                self.current_instructions
+                    .push(Instruction::Call(Some(dest), callee_name, arg_ops));
                 Ok(Operand::Reg(dest))
             }
             Expr::FieldAccess { target, field, .. } => {
@@ -450,7 +464,9 @@ mod tests {
         let program = parser.parse_program().unwrap();
 
         let mut lowerer = IrLowerer::new();
-        let module = lowerer.lower_program(&program).expect("IR lowering should succeed");
+        let module = lowerer
+            .lower_program(&program)
+            .expect("IR lowering should succeed");
 
         assert_eq!(module.entities.len(), 1);
         let entity = &module.entities[0];
@@ -462,8 +478,13 @@ mod tests {
 
         // Verify that blocks contain instructions and ContractAssert
         let has_contract_assert = method.blocks.iter().any(|b| {
-            b.instructions.iter().any(|inst| matches!(inst, Instruction::ContractAssert { .. }))
+            b.instructions
+                .iter()
+                .any(|inst| matches!(inst, Instruction::ContractAssert { .. }))
         });
-        assert!(has_contract_assert, "IR must emit ContractAssert instructions for preconditions/postconditions");
+        assert!(
+            has_contract_assert,
+            "IR must emit ContractAssert instructions for preconditions/postconditions"
+        );
     }
 }

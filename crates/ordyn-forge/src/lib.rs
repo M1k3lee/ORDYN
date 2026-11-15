@@ -97,7 +97,10 @@ pub struct PackageInspector;
 impl PackageInspector {
     pub fn inspect(pkg: &SealedPackage) -> String {
         let mut report = String::new();
-        report.push_str(&format!("Package: {} (v{})\n", pkg.manifest.name, pkg.manifest.version));
+        report.push_str(&format!(
+            "Package: {} (v{})\n",
+            pkg.manifest.name, pkg.manifest.version
+        ));
         report.push_str(&format!("Integrity Hash: {}\n", pkg.integrity_hash));
         report.push_str("Declared Capabilities:\n");
         if pkg.manifest.declared_capabilities.is_empty() {
@@ -113,7 +116,12 @@ impl PackageInspector {
         } else {
             for (dep, spec) in &pkg.manifest.dependencies {
                 let caps: Vec<String> = spec.allowed_capabilities.iter().cloned().collect();
-                report.push_str(&format!("  - {} ({}) -> Allowed Caps: [{}]\n", dep, spec.version, caps.join(", ")));
+                report.push_str(&format!(
+                    "  - {} ({}) -> Allowed Caps: [{}]\n",
+                    dep,
+                    spec.version,
+                    caps.join(", ")
+                ));
             }
         }
         report
@@ -133,10 +141,13 @@ mod tests {
         // Root strictly grants only StorageRead to json_parser
         let mut json_allowed = HashSet::new();
         json_allowed.insert("StorageRead".to_string());
-        root_deps.insert("json_parser".to_string(), DependencySpec {
-            version: "1.0.0".to_string(),
-            allowed_capabilities: json_allowed,
-        });
+        root_deps.insert(
+            "json_parser".to_string(),
+            DependencySpec {
+                version: "1.0.0".to_string(),
+                allowed_capabilities: json_allowed,
+            },
+        );
 
         let root_manifest = PackageManifest {
             name: "BankingApp".to_string(),
@@ -154,7 +165,12 @@ mod tests {
             declared_capabilities: dep_caps_safe,
             dependencies: HashMap::new(),
         };
-        assert!(ForgeVerifier::verify_dependency_capabilities(&root_manifest, "json_parser", &dep_manifest_safe).is_ok());
+        assert!(ForgeVerifier::verify_dependency_capabilities(
+            &root_manifest,
+            "json_parser",
+            &dep_manifest_safe
+        )
+        .is_ok());
 
         // Malicious dependency demanding ungranted NetConnect -> Rejected
         let mut dep_caps_malicious = HashSet::new();
@@ -165,8 +181,16 @@ mod tests {
             declared_capabilities: dep_caps_malicious,
             dependencies: HashMap::new(),
         };
-        let err = ForgeVerifier::verify_dependency_capabilities(&root_manifest, "json_parser", &dep_manifest_malicious).unwrap_err();
-        assert!(matches!(err, ForgeError::UngrantedCapabilityDependency { .. }));
+        let err = ForgeVerifier::verify_dependency_capabilities(
+            &root_manifest,
+            "json_parser",
+            &dep_manifest_malicious,
+        )
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ForgeError::UngrantedCapabilityDependency { .. }
+        ));
     }
 
     #[test]

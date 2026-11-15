@@ -30,13 +30,16 @@
 | **Standard Library**| HTTP Transport (`ordyn-stdlib`)| Implemented | 1 unit test passing | Tested | Capability-checked request dispatch |
 | **Package & Forge** | Packaging & Forge (`ordyn-forge`)| Implemented | 2 unit tests passing | Tested | Zero ambient authority on dependencies |
 | **Language Server** | Language Service (`ordyn-lsp`)| Implemented | 3 unit tests passing | Tested | Diagnostics, document symbols, hover tooltips |
+| **Visual Architecture** | Visual DAG & HTML (`ordyn-visual`)| Implemented | 1 unit test passing | Tested | Mermaid architecture generator, interactive HTML explorer |
 | **Red Lab Validation**| Adversarial Tests (`ordyn-red-lab`)| Implemented | 4 unit tests passing | Tested | Forgery, widening, egress, invariant bypass attacks |
-| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `package`, `inspect`, `new` |
+| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `package`, `inspect`, `visual`, `new` |
+| **Editor Integration** | VS Code Extension (`editors/code`)| Implemented | Syntax & configuration ready | Integrated | TextMate grammar, language config, package manifest |
+| **Continuous Integration** | GitHub Actions (`.github/workflows/ci.yml`)| Implemented | Multi-platform matrix | Configured | Linux, macOS, Windows CI with fmt, clippy, test |
 | **Applications** | Secure Banking Service | Implemented | End-to-end verified | Tested | `examples/secure_banking_service.ordyn` |
 
 ---
 
-## 2. Test Evidence Log (29 Automated Tests Passing)
+## 2. Test Evidence Log (30 Automated Tests Passing)
 
 - `ordyn_lexer::tests::test_lex_basic_tokens`: PASSED
 - `ordyn_lexer::tests::test_lex_keywords_and_symbols`: PASSED
@@ -66,6 +69,7 @@
 - `ordyn_lsp::tests::test_lsp_diagnostics_on_clean_document`: PASSED
 - `ordyn_lsp::tests::test_lsp_diagnostics_catches_type_and_effect_errors`: PASSED
 - `ordyn_lsp::tests::test_lsp_document_symbols_extraction`: PASSED
+- `ordyn_visual::tests::test_architecture_graph_generation`: PASSED
 - `ordyn_red_lab::tests::red_lab_test_capability_forgery_is_trapped`: PASSED
 - `ordyn_red_lab::tests::red_lab_test_authority_expansion_attacks_are_blocked`: PASSED
 - `ordyn_red_lab::tests::red_lab_test_unauthorized_network_egress_is_caught_at_compile_time`: PASSED
@@ -75,3 +79,6 @@
 - CLI verification: `ordyn run examples/secure_banking_service.ordyn --function deposit --arg 250` -> PASSED
 - CLI verification: `ordyn package examples/secure_banking_service.ordyn` -> PASSED
 - CLI verification: `ordyn inspect examples/secure_banking_service.ordyn-pkg` -> PASSED
+- CLI verification: `ordyn visual examples/secure_banking_service.ordyn` -> PASSED
+- Code Quality: `cargo clippy --workspace --all-targets -- -D warnings` -> 0 WARNINGS / 0 ERRORS
+- Code Formatting: `cargo fmt --check` -> CLEAN

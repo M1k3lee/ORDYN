@@ -1,6 +1,6 @@
+use miette::Diagnostic;
 use ordyn_guard::{CapHandle, SecurityKernel};
 use ordyn_ir::*;
-use miette::Diagnostic;
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -16,7 +16,10 @@ pub enum RuntimeError {
 
     #[error("Memory ceiling exceeded: requested {requested_pages} pages (limit: {limit_pages})")]
     #[diagnostic(code(ordyn::runtime::memory_limit))]
-    MemoryLimitExceeded { requested_pages: u32, limit_pages: u32 },
+    MemoryLimitExceeded {
+        requested_pages: u32,
+        limit_pages: u32,
+    },
 
     #[error("Function `{name}` not found in executable module")]
     #[diagnostic(code(ordyn::runtime::function_not_found))]
@@ -48,19 +51,11 @@ impl WasmBytecodeEmitter {
 
         // Section 1: Type Section
         // Function signatures: (i64, i64) -> i64, () -> i64, etc.
-        let mut type_payload = Vec::new();
-        type_payload.push(0x01); // 1 type entry
-        type_payload.push(0x60); // form: func
-        type_payload.push(0x01); // 1 param
-        type_payload.push(0x7E); // i64
-        type_payload.push(0x01); // 1 return
-        type_payload.push(0x7E); // i64
+        let type_payload = vec![0x01, 0x60, 0x01, 0x7E, 0x01, 0x7E];
         write_section(&mut bytes, 1, &type_payload);
 
         // Section 3: Function Section (maps func index to type index)
-        let mut func_payload = Vec::new();
-        func_payload.push(0x01); // 1 function
-        func_payload.push(0x00); // type index 0
+        let func_payload = vec![0x01, 0x00];
         write_section(&mut bytes, 3, &func_payload);
 
         // Section 7: Export Section
@@ -77,16 +72,8 @@ impl WasmBytecodeEmitter {
         let mut code_payload = Vec::new();
         code_payload.push(0x01); // 1 function body
 
-        let mut body = Vec::new();
-        body.push(0x00); // 0 local declarations
-
-        // Sample instruction emission: local.get 0, i64.const 1, i64.add, end
-        body.push(0x20); // local.get
-        body.push(0x00); // local index 0
-        body.push(0x42); // i64.const
-        body.push(0x01); // 1
-        body.push(0x7C); // i64.add
-        body.push(0x0B); // end
+        // Sample instruction emission: 0 locals, local.get 0, i64.const 1, i64.add, end
+        let body = vec![0x00, 0x20, 0x00, 0x42, 0x01, 0x7C, 0x0B];
 
         code_payload.push(body.len() as u8);
         code_payload.extend_from_slice(&body);
@@ -154,27 +141,26 @@ impl SandboxRuntime {
     }
 
     pub fn execute_function(&mut self, func_name: &str, args: &[i64]) -> Result<i64, RuntimeError> {
-        let function = self.find_function(func_name).ok_or_else(|| {
-            RuntimeError::FunctionNotFound {
-                name: func_name.to_string(),
-            }
-        })?;
+        let function =
+            self.find_function(func_name)
+                .ok_or_else(|| RuntimeError::FunctionNotFound {
+                    name: func_name.to_string(),
+                })?;
 
         let mut registers: HashMap<Reg, i64> = HashMap::new();
 
         // Bind parameters
-        let mut reg_idx = 0;
         let mut arg_idx = 0;
-        for (param_name, _) in &function.params {
+        for (reg_idx, (param_name, _)) in function.params.iter().enumerate() {
+            let reg = Reg(reg_idx as u32);
             if param_name == "self" {
-                registers.insert(Reg(reg_idx), 1);
+                registers.insert(reg, 1);
             } else if arg_idx < args.len() {
-                registers.insert(Reg(reg_idx), args[arg_idx]);
+                registers.insert(reg, args[arg_idx]);
                 arg_idx += 1;
             } else {
-                registers.insert(Reg(reg_idx), 0);
+                registers.insert(reg, 0);
             }
-            reg_idx += 1;
         }
 
         let mut current_block_id = 0;
@@ -228,7 +214,11 @@ impl SandboxRuntime {
                         };
                         registers.insert(*dest, res);
                     }
-                    Instruction::ContractAssert { condition, kind, message } => {
+                    Instruction::ContractAssert {
+                        condition,
+                        kind,
+                        message,
+                    } => {
                         let cond_val = self.eval_operand(condition, &registers);
                         if cond_val == 0 {
                             return Err(RuntimeError::ContractViolation(format!(
@@ -237,13 +227,19 @@ impl SandboxRuntime {
                             )));
                         }
                     }
-                    Instruction::CapabilityCheck { handle, operation, resource } => {
+                    Instruction::CapabilityCheck {
+                        handle,
+                        operation,
+                        resource,
+                    } => {
                         let h = self.eval_operand(handle, &registers) as u32;
                         let res_str = format!("{:?}", resource);
                         self.context
                             .security_kernel
                             .authorize(func_name, CapHandle(h), operation, &res_str)
-                            .map_err(|e| RuntimeError::Trap(format!("Capability check failed: {}", e)))?;
+                            .map_err(|e| {
+                                RuntimeError::Trap(format!("Capability check failed: {}", e))
+                            })?;
                     }
                     _ => {}
                 }
@@ -259,7 +255,11 @@ impl SandboxRuntime {
                 Terminator::Jump(target) => {
                     current_block_id = *target;
                 }
-                Terminator::Branch { condition, then_block, else_block } => {
+                Terminator::Branch {
+                    condition,
+                    then_block,
+                    else_block,
+                } => {
                     let cond = self.eval_operand(condition, &registers);
                     if cond != 0 {
                         current_block_id = *then_block;
@@ -342,7 +342,10 @@ mod tests {
 
         let func = IrFunction {
             name: "add".to_string(),
-            params: vec![("a".to_string(), IrType::Int), ("b".to_string(), IrType::Int)],
+            params: vec![
+                ("a".to_string(), IrType::Int),
+                ("b".to_string(), IrType::Int),
+            ],
             return_type: IrType::Int,
             blocks: vec![block],
         };
@@ -353,7 +356,9 @@ mod tests {
         };
 
         let mut runtime = SandboxRuntime::new(module, 100, 16);
-        let result = runtime.execute_function("add", &[15, 27]).expect("execution should succeed");
+        let result = runtime
+            .execute_function("add", &[15, 27])
+            .expect("execution should succeed");
         assert_eq!(result, 42);
     }
 
@@ -361,14 +366,12 @@ mod tests {
     fn test_runtime_fuel_exhaustion_trips_trap() {
         let block = BasicBlock {
             id: 0,
-            instructions: vec![
-                Instruction::Binary(
-                    Reg(0),
-                    IrBinaryOp::Add,
-                    Operand::ConstInt(1),
-                    Operand::ConstInt(1),
-                ),
-            ],
+            instructions: vec![Instruction::Binary(
+                Reg(0),
+                IrBinaryOp::Add,
+                Operand::ConstInt(1),
+                Operand::ConstInt(1),
+            )],
             terminator: Terminator::Jump(0), // Infinite loop
         };
 

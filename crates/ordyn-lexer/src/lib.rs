@@ -1,5 +1,5 @@
-use ordyn_diagnostics::Span;
 use miette::Diagnostic;
+use ordyn_diagnostics::Span;
 use thiserror::Error;
 
 #[derive(Error, Diagnostic, Debug, Clone, PartialEq, Eq)]
@@ -57,35 +57,35 @@ pub enum TokenKind {
     StringLiteral(String),
 
     // Symbols & Delimiters
-    LParen,       // (
-    RParen,       // )
-    LBrace,       // {
-    RBrace,       // }
-    LBracket,     // [
-    RBracket,     // ]
-    Comma,        // ,
-    Colon,        // :
-    Semicolon,    // ;
-    Dot,          // .
-    Arrow,        // ->
-    FatArrow,     // =>
+    LParen,    // (
+    RParen,    // )
+    LBrace,    // {
+    RBrace,    // }
+    LBracket,  // [
+    RBracket,  // ]
+    Comma,     // ,
+    Colon,     // :
+    Semicolon, // ;
+    Dot,       // .
+    Arrow,     // ->
+    FatArrow,  // =>
 
     // Operators
-    Plus,         // +
-    Minus,        // -
-    Star,         // *
-    Slash,        // /
-    Percent,      // %
-    Eq,           // =
-    EqEq,         // ==
-    NotEq,        // !=
-    Lt,           // <
-    Lte,          // <=
-    Gt,           // >
-    Gte,          // >=
-    AndAnd,       // &&
-    OrOr,         // ||
-    Bang,         // !
+    Plus,    // +
+    Minus,   // -
+    Star,    // *
+    Slash,   // /
+    Percent, // %
+    Eq,      // =
+    EqEq,    // ==
+    NotEq,   // !=
+    Lt,      // <
+    Lte,     // <=
+    Gt,      // >
+    Gte,     // >=
+    AndAnd,  // &&
+    OrOr,    // ||
+    Bang,    // !
 
     // End of File
     Eof,
@@ -129,20 +129,62 @@ impl<'a> Lexer<'a> {
             let ch = self.peek_char();
 
             let kind = match ch {
-                '(' => { self.bump(); TokenKind::LParen }
-                ')' => { self.bump(); TokenKind::RParen }
-                '{' => { self.bump(); TokenKind::LBrace }
-                '}' => { self.bump(); TokenKind::RBrace }
-                '[' => { self.bump(); TokenKind::LBracket }
-                ']' => { self.bump(); TokenKind::RBracket }
-                ',' => { self.bump(); TokenKind::Comma }
-                ';' => { self.bump(); TokenKind::Semicolon }
-                ':' => { self.bump(); TokenKind::Colon }
-                '.' => { self.bump(); TokenKind::Dot }
-                '+' => { self.bump(); TokenKind::Plus }
-                '*' => { self.bump(); TokenKind::Star }
-                '/' => { self.bump(); TokenKind::Slash }
-                '%' => { self.bump(); TokenKind::Percent }
+                '(' => {
+                    self.bump();
+                    TokenKind::LParen
+                }
+                ')' => {
+                    self.bump();
+                    TokenKind::RParen
+                }
+                '{' => {
+                    self.bump();
+                    TokenKind::LBrace
+                }
+                '}' => {
+                    self.bump();
+                    TokenKind::RBrace
+                }
+                '[' => {
+                    self.bump();
+                    TokenKind::LBracket
+                }
+                ']' => {
+                    self.bump();
+                    TokenKind::RBracket
+                }
+                ',' => {
+                    self.bump();
+                    TokenKind::Comma
+                }
+                ';' => {
+                    self.bump();
+                    TokenKind::Semicolon
+                }
+                ':' => {
+                    self.bump();
+                    TokenKind::Colon
+                }
+                '.' => {
+                    self.bump();
+                    TokenKind::Dot
+                }
+                '+' => {
+                    self.bump();
+                    TokenKind::Plus
+                }
+                '*' => {
+                    self.bump();
+                    TokenKind::Star
+                }
+                '/' => {
+                    self.bump();
+                    TokenKind::Slash
+                }
+                '%' => {
+                    self.bump();
+                    TokenKind::Percent
+                }
                 '!' => {
                     self.bump();
                     if self.match_char('=') {
@@ -259,22 +301,34 @@ impl<'a> Lexer<'a> {
             let ch = self.peek_char();
             if ch.is_whitespace() {
                 self.bump();
-            } else if ch == '/' && self.cursor + 1 < self.bytes.len() && self.bytes[self.cursor + 1] == b'/' {
+            } else if ch == '/'
+                && self.cursor + 1 < self.bytes.len()
+                && self.bytes[self.cursor + 1] == b'/'
+            {
                 // Line comment
                 while !self.is_eof() && self.peek_char() != '\n' {
                     self.bump();
                 }
-            } else if ch == '/' && self.cursor + 1 < self.bytes.len() && self.bytes[self.cursor + 1] == b'*' {
+            } else if ch == '/'
+                && self.cursor + 1 < self.bytes.len()
+                && self.bytes[self.cursor + 1] == b'*'
+            {
                 // Block comment
                 self.bump();
                 self.bump();
                 let mut depth = 1;
                 while !self.is_eof() && depth > 0 {
-                    if self.peek_char() == '*' && self.cursor + 1 < self.bytes.len() && self.bytes[self.cursor + 1] == b'/' {
+                    if self.peek_char() == '*'
+                        && self.cursor + 1 < self.bytes.len()
+                        && self.bytes[self.cursor + 1] == b'/'
+                    {
                         self.bump();
                         self.bump();
                         depth -= 1;
-                    } else if self.peek_char() == '/' && self.cursor + 1 < self.bytes.len() && self.bytes[self.cursor + 1] == b'*' {
+                    } else if self.peek_char() == '/'
+                        && self.cursor + 1 < self.bytes.len()
+                        && self.bytes[self.cursor + 1] == b'*'
+                    {
                         self.bump();
                         self.bump();
                         depth += 1;
@@ -324,7 +378,11 @@ impl<'a> Lexer<'a> {
             self.bump();
         }
 
-        if !self.is_eof() && self.peek_char() == '.' && self.cursor + 1 < self.bytes.len() && (self.bytes[self.cursor + 1] as char).is_ascii_digit() {
+        if !self.is_eof()
+            && self.peek_char() == '.'
+            && self.cursor + 1 < self.bytes.len()
+            && (self.bytes[self.cursor + 1] as char).is_ascii_digit()
+        {
             self.bump(); // consume '.'
             while !self.is_eof() && self.peek_char().is_ascii_digit() {
                 self.bump();

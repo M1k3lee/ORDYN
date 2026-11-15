@@ -1,6 +1,6 @@
+use miette::Diagnostic;
 use ordyn_ast::*;
 use ordyn_diagnostics::Span;
-use miette::Diagnostic;
 use std::collections::{HashMap, HashSet};
 use thiserror::Error;
 
@@ -154,10 +154,8 @@ impl EffectAnalyzer {
                         for eff in &m.effects {
                             set.insert(Effect::from_name(&eff.name));
                         }
-                        self.entity_method_effects.insert(
-                            (entity.name.name.clone(), m.name.name.clone()),
-                            set,
-                        );
+                        self.entity_method_effects
+                            .insert((entity.name.name.clone(), m.name.name.clone()), set);
                     }
                 }
             }
@@ -167,10 +165,8 @@ impl EffectAnalyzer {
                     for eff in &m.effects {
                         set.insert(Effect::from_name(&eff.name));
                     }
-                    self.interface_method_effects.insert(
-                        (iface.name.name.clone(), m.name.name.clone()),
-                        set,
-                    );
+                    self.interface_method_effects
+                        .insert((iface.name.name.clone(), m.name.name.clone()), set);
                 }
             }
             Declaration::Flow(flow) => {
@@ -187,13 +183,18 @@ impl EffectAnalyzer {
     fn analyze_declaration(&self, decl: &Declaration) -> Result<(), EffectError> {
         match decl {
             Declaration::Function(func) => {
-                let declared_effects = self.function_effects.get(&func.name.name).cloned().unwrap_or_default();
+                let declared_effects = self
+                    .function_effects
+                    .get(&func.name.name)
+                    .cloned()
+                    .unwrap_or_default();
                 self.analyze_block(&func.body, &func.name.name, &declared_effects, None)?;
             }
             Declaration::Entity(entity) => {
                 for member in &entity.members {
                     if let EntityMember::Method(m) = member {
-                        let declared_effects = self.entity_method_effects
+                        let declared_effects = self
+                            .entity_method_effects
                             .get(&(entity.name.name.clone(), m.name.name.clone()))
                             .cloned()
                             .unwrap_or_default();
@@ -207,7 +208,11 @@ impl EffectAnalyzer {
                 }
             }
             Declaration::Flow(flow) => {
-                let declared_effects = self.function_effects.get(&flow.name.name).cloned().unwrap_or_default();
+                let declared_effects = self
+                    .function_effects
+                    .get(&flow.name.name)
+                    .cloned()
+                    .unwrap_or_default();
                 for expr in &flow.body {
                     self.analyze_expr(expr, &flow.name.name, &declared_effects, None)?;
                 }
@@ -243,9 +248,17 @@ impl EffectAnalyzer {
                     self.analyze_expr(expr, function_name, declared_effects, entity_name)?;
                 }
             }
-            Stmt::Assign { target, value, span } => {
+            Stmt::Assign {
+                target,
+                value,
+                span,
+            } => {
                 // Mutating entity field requires either enclosing entity context or State effect
-                if let Expr::FieldAccess { target: inner_target, .. } = target {
+                if let Expr::FieldAccess {
+                    target: inner_target,
+                    ..
+                } = target
+                {
                     if let Expr::Ident(id) = &**inner_target {
                         if id.name == "self" {
                             // Local mutation inside an entity method is permitted; outside an entity, require State
@@ -303,7 +316,10 @@ impl EffectAnalyzer {
                     if let Expr::Ident(target_id) = &**target {
                         if target_id.name == "self" {
                             if let Some(e_name) = entity_name {
-                                if let Some(m_effects) = self.entity_method_effects.get(&(e_name.to_string(), field.name.clone())) {
+                                if let Some(m_effects) = self
+                                    .entity_method_effects
+                                    .get(&(e_name.to_string(), field.name.clone()))
+                                {
                                     for required_effect in &m_effects.effects {
                                         if !declared_effects.contains(required_effect) {
                                             return Err(EffectError::UnhandledEffect {

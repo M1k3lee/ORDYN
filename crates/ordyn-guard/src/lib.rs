@@ -160,9 +160,12 @@ impl SecurityKernel {
         restricted_ops: &[&str],
         restricted_prefix: &str,
     ) -> Result<CapHandle, KernelError> {
-        let parent_record = self.capability_table.get(&parent_handle).ok_or(KernelError::InvalidHandle {
-            handle: parent_handle.0,
-        })?;
+        let parent_record =
+            self.capability_table
+                .get(&parent_handle)
+                .ok_or(KernelError::InvalidHandle {
+                    handle: parent_handle.0,
+                })?;
 
         if parent_record.is_revoked {
             return Err(KernelError::CapabilityRevoked {
@@ -266,7 +269,8 @@ impl SecurityKernel {
             return Err(KernelError::CapabilityRevoked { handle: handle.0 });
         }
 
-        if !record.operations.contains(operation) || !resource.starts_with(&record.resource_prefix) {
+        if !record.operations.contains(operation) || !resource.starts_with(&record.resource_prefix)
+        {
             self.audit_engine.log(
                 caller,
                 handle.0,
@@ -281,7 +285,13 @@ impl SecurityKernel {
             });
         }
 
-        self.audit_engine.log(caller, handle.0, operation, resource, AuditDecision::Granted);
+        self.audit_engine.log(
+            caller,
+            handle.0,
+            operation,
+            resource,
+            AuditDecision::Granted,
+        );
         Ok(())
     }
 
@@ -311,11 +321,16 @@ mod tests {
         let mut kernel = SecurityKernel::new();
         let forged = CapHandle(9999);
 
-        let err = kernel.authorize("MaliciousEntity", forged, "Read", "/etc/passwd").unwrap_err();
+        let err = kernel
+            .authorize("MaliciousEntity", forged, "Read", "/etc/passwd")
+            .unwrap_err();
         assert!(matches!(err, KernelError::InvalidHandle { .. }));
 
         assert_eq!(kernel.audit_records().len(), 1);
-        assert!(matches!(kernel.audit_records()[0].decision, AuditDecision::Trapped(_)));
+        assert!(matches!(
+            kernel.audit_records()[0].decision,
+            AuditDecision::Trapped(_)
+        ));
     }
 
     #[test]
@@ -331,13 +346,17 @@ mod tests {
         assert!(invalid_attenuate.is_err());
 
         // Child can connect within narrowed scope
-        assert!(kernel.authorize("ChildEntity", child_cap, "Connect", "10.0.1.5:8080").is_ok());
+        assert!(kernel
+            .authorize("ChildEntity", child_cap, "Connect", "10.0.1.5:8080")
+            .is_ok());
 
         // Revoking root cascades down and revokes child
         let revoked_count = kernel.revoke(root_cap).unwrap();
         assert_eq!(revoked_count, 2);
 
-        let err = kernel.authorize("ChildEntity", child_cap, "Connect", "10.0.1.5:8080").unwrap_err();
+        let err = kernel
+            .authorize("ChildEntity", child_cap, "Connect", "10.0.1.5:8080")
+            .unwrap_err();
         assert!(matches!(err, KernelError::CapabilityRevoked { .. }));
     }
 }

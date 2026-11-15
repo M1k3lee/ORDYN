@@ -148,7 +148,10 @@ impl LanguageService {
         let symbols = Self::get_document_symbols(source);
         for s in symbols {
             if byte_offset >= s.span.start && byte_offset <= (s.span.start + s.span.length) {
-                return Some(format!("**ORDYN {}**: `{}`\nSecurity Boundary: Kernel Protected", s.kind, s.name));
+                return Some(format!(
+                    "**ORDYN {}**: `{}`\nSecurity Boundary: Kernel Protected",
+                    s.kind, s.name
+                ));
             }
         }
         None
@@ -174,7 +177,10 @@ mod tests {
             }
         "#;
         let diags = LanguageService::analyze_document(source);
-        assert!(diags.is_empty(), "Valid document should produce zero diagnostics");
+        assert!(
+            diags.is_empty(),
+            "Valid document should produce zero diagnostics"
+        );
     }
 
     #[test]
@@ -191,7 +197,10 @@ mod tests {
             }
         "#;
         let diags = LanguageService::analyze_document(invalid_source);
-        assert!(!diags.is_empty(), "Invalid document must generate diagnostics");
+        assert!(
+            !diags.is_empty(),
+            "Invalid document must generate diagnostics"
+        );
     }
 
     #[test]

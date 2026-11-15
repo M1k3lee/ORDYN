@@ -1,7 +1,7 @@
+use miette::Diagnostic;
 use ordyn_ast::*;
 use ordyn_diagnostics::Span;
 use ordyn_lexer::{LexError, Lexer, Token, TokenKind};
-use miette::Diagnostic;
 use thiserror::Error;
 
 #[derive(Error, Diagnostic, Debug, Clone, PartialEq)]
@@ -56,10 +56,7 @@ impl Parser {
         let end_span = self.previous_span();
         let span = start_span.merge(end_span);
 
-        Ok(Program {
-            declarations,
-            span,
-        })
+        Ok(Program { declarations, span })
     }
 
     fn parse_declaration(&mut self) -> Result<Declaration, ParseError> {
@@ -74,7 +71,9 @@ impl Parser {
             _ => {
                 let token = self.advance();
                 Err(ParseError::UnexpectedToken {
-                    expected: "declaration (entity, capability, contract, flow, boundary, interface, fn)".to_string(),
+                    expected:
+                        "declaration (entity, capability, contract, flow, boundary, interface, fn)"
+                            .to_string(),
                     found: token.kind,
                     span: token.span,
                 })
@@ -379,7 +378,10 @@ impl Parser {
         let effects = self.parse_effect_clause()?;
 
         let mut contracts = Vec::new();
-        while self.check(&TokenKind::Requires) || self.check(&TokenKind::Ensures) || self.check(&TokenKind::Invariant) {
+        while self.check(&TokenKind::Requires)
+            || self.check(&TokenKind::Ensures)
+            || self.check(&TokenKind::Invariant)
+        {
             if self.match_token(&TokenKind::Requires) {
                 let expr = self.parse_expr()?;
                 let span = expr.span();
@@ -461,7 +463,11 @@ impl Parser {
                         self.match_token(&TokenKind::Comma);
                     }
                     let end = self.expect(TokenKind::Gt)?.span;
-                    Ok(TypeRef::Generic(ident.clone(), type_args, ident.span.merge(end)))
+                    Ok(TypeRef::Generic(
+                        ident.clone(),
+                        type_args,
+                        ident.span.merge(end),
+                    ))
                 } else {
                     Ok(TypeRef::Named(ident))
                 }
@@ -595,7 +601,11 @@ impl Parser {
 
     fn parse_relational(&mut self) -> Result<Expr, ParseError> {
         let mut left = self.parse_additive()?;
-        while self.check(&TokenKind::Lt) || self.check(&TokenKind::Lte) || self.check(&TokenKind::Gt) || self.check(&TokenKind::Gte) {
+        while self.check(&TokenKind::Lt)
+            || self.check(&TokenKind::Lte)
+            || self.check(&TokenKind::Gt)
+            || self.check(&TokenKind::Gte)
+        {
             let op = if self.match_token(&TokenKind::Lt) {
                 BinaryOp::Lt
             } else if self.match_token(&TokenKind::Lte) {
@@ -641,7 +651,10 @@ impl Parser {
 
     fn parse_multiplicative(&mut self) -> Result<Expr, ParseError> {
         let mut left = self.parse_unary()?;
-        while self.check(&TokenKind::Star) || self.check(&TokenKind::Slash) || self.check(&TokenKind::Percent) {
+        while self.check(&TokenKind::Star)
+            || self.check(&TokenKind::Slash)
+            || self.check(&TokenKind::Percent)
+        {
             let op = if self.match_token(&TokenKind::Star) {
                 BinaryOp::Mul
             } else if self.match_token(&TokenKind::Slash) {
@@ -790,7 +803,10 @@ impl Parser {
     }
 
     fn peek(&self) -> TokenKind {
-        self.tokens.get(self.cursor).map(|t| t.kind.clone()).unwrap_or(TokenKind::Eof)
+        self.tokens
+            .get(self.cursor)
+            .map(|t| t.kind.clone())
+            .unwrap_or(TokenKind::Eof)
     }
 
     fn check(&self, kind: &TokenKind) -> bool {
@@ -831,7 +847,10 @@ impl Parser {
     }
 
     fn current_span(&self) -> Span {
-        self.tokens.get(self.cursor).map(|t| t.span).unwrap_or_default()
+        self.tokens
+            .get(self.cursor)
+            .map(|t| t.span)
+            .unwrap_or_default()
     }
 
     fn previous_span(&self) -> Span {
@@ -842,8 +861,6 @@ impl Parser {
         }
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {

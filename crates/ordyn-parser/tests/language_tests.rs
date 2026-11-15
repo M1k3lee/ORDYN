@@ -15,8 +15,11 @@ fn test_canonical_example_parses_completely() {
     let source = fs::read_to_string(&file_path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", file_path.display(), e));
 
-    let mut parser = Parser::from_source(&source).expect("lexer should succeed on canonical example");
-    let program = parser.parse_program().expect("parser should succeed on canonical example");
+    let mut parser =
+        Parser::from_source(&source).expect("lexer should succeed on canonical example");
+    let program = parser
+        .parse_program()
+        .expect("parser should succeed on canonical example");
 
     assert_eq!(program.declarations.len(), 5);
 

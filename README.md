@@ -1,7 +1,20 @@
-# ORDYN
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/ordyn-banner-dark.png">
+    <img src="assets/ordyn-banner-light.png" alt="ORDYN - A New Foundation for Software" width="600"/>
+  </picture>
+</p>
 
-> **A New Foundation for Software.**  
-> *Security first. Engineered beyond code.*
+<p align="center">
+  <strong>A New Foundation for Software.</strong><br/>
+  <em>Security first. Engineered beyond code.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/M1k3lee/ORDYN/actions"><img src="https://github.com/M1k3lee/ORDYN/workflows/CI/badge.svg" alt="CI Status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg" alt="License" /></a>
+  <a href="docs/development/IMPLEMENTATION_STATUS.md"><img src="https://img.shields.io/badge/status-active%20development-emerald.svg" alt="Status" /></a>
+</p>
 
 ---
 

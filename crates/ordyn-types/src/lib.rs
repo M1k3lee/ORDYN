@@ -1,6 +1,6 @@
+use miette::Diagnostic;
 use ordyn_ast::*;
 use ordyn_diagnostics::Span;
-use miette::Diagnostic;
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -132,7 +132,11 @@ impl std::fmt::Display for Type {
             Type::Capability(name) => write!(f, "Capability({})", name),
             Type::Interface(name) => write!(f, "Interface({})", name),
             Type::Named(name) => write!(f, "{}", name),
-            Type::Function { params, return_type, .. } => {
+            Type::Function {
+                params,
+                return_type,
+                ..
+            } => {
                 let p_strs: Vec<String> = params.iter().map(|p| p.to_string()).collect();
                 write!(f, "fn({}) -> {}", p_strs.join(", "), return_type)
             }
@@ -374,21 +378,26 @@ impl TypeChecker {
             Declaration::Boundary(boundary) => {
                 // Verify granted capabilities exist and args match
                 for grant in &boundary.grants {
-                    let cap_info = self.capabilities.get(&grant.capability_name.name).cloned().ok_or_else(|| {
-                        TypeError::UndefinedSymbol {
+                    let cap_info = self
+                        .capabilities
+                        .get(&grant.capability_name.name)
+                        .cloned()
+                        .ok_or_else(|| TypeError::UndefinedSymbol {
                             name: grant.capability_name.name.clone(),
                             span: grant.capability_name.span,
-                        }
-                    })?;
+                        })?;
 
                     for (arg_name, arg_expr) in &grant.arguments {
-                        let field_ty = cap_info.fields.get(&arg_name.name).cloned().ok_or_else(|| {
-                            TypeError::UnknownField {
-                                target_type: cap_info.name.clone(),
-                                field: arg_name.name.clone(),
-                                span: arg_name.span,
-                            }
-                        })?;
+                        let field_ty =
+                            cap_info
+                                .fields
+                                .get(&arg_name.name)
+                                .cloned()
+                                .ok_or_else(|| TypeError::UnknownField {
+                                    target_type: cap_info.name.clone(),
+                                    field: arg_name.name.clone(),
+                                    span: arg_name.span,
+                                })?;
                         let expr_ty = self.check_expr(arg_expr)?;
                         if expr_ty != field_ty {
                             return Err(TypeError::TypeMismatch {
@@ -427,7 +436,12 @@ impl TypeChecker {
 
         // Define `self` if inside an entity method
         if let Some(entity_name) = &self.current_entity {
-            self.define_var("self", Type::SelfType(entity_name.clone()), true, func.name.span);
+            self.define_var(
+                "self",
+                Type::SelfType(entity_name.clone()),
+                true,
+                func.name.span,
+            );
         }
 
         // Define parameters
@@ -464,7 +478,13 @@ impl TypeChecker {
 
     fn check_stmt(&mut self, stmt: &Stmt) -> Result<(), TypeError> {
         match stmt {
-            Stmt::Let { is_mut, name, ty, init, span } => {
+            Stmt::Let {
+                is_mut,
+                name,
+                ty,
+                init,
+                span,
+            } => {
                 let inferred_ty = if let Some(init_expr) = init {
                     let expr_ty = self.check_expr(init_expr)?;
                     if let Some(annotated) = ty {
@@ -486,7 +506,11 @@ impl TypeChecker {
 
                 self.define_var(&name.name, inferred_ty, *is_mut, *span);
             }
-            Stmt::Assign { target, value, span } => {
+            Stmt::Assign {
+                target,
+                value,
+                span,
+            } => {
                 let target_ty = self.check_expr(target)?;
                 let value_ty = self.check_expr(value)?;
 
@@ -508,7 +532,12 @@ impl TypeChecker {
                             });
                         }
                     }
-                } else if let Expr::FieldAccess { target: inner_target, field, .. } = target {
+                } else if let Expr::FieldAccess {
+                    target: inner_target,
+                    field,
+                    ..
+                } = target
+                {
                     if let Expr::Ident(id) = &**inner_target {
                         if id.name == "self" {
                             if let Some(entity_name) = &self.current_entity {
@@ -577,17 +606,29 @@ impl TypeChecker {
                     })
                 }
             }
-            Expr::Binary { left, op, right, span } => {
+            Expr::Binary {
+                left,
+                op,
+                right,
+                span,
+            } => {
                 let left_ty = self.check_expr(left)?;
                 let right_ty = self.check_expr(right)?;
 
                 match op {
-                    BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => {
+                    BinaryOp::Add
+                    | BinaryOp::Sub
+                    | BinaryOp::Mul
+                    | BinaryOp::Div
+                    | BinaryOp::Mod => {
                         if left_ty == Type::Int && right_ty == Type::Int {
                             Ok(Type::Int)
                         } else if left_ty == Type::Float && right_ty == Type::Float {
                             Ok(Type::Float)
-                        } else if *op == BinaryOp::Add && left_ty == Type::String && right_ty == Type::String {
+                        } else if *op == BinaryOp::Add
+                            && left_ty == Type::String
+                            && right_ty == Type::String
+                        {
                             Ok(Type::String)
                         } else {
                             Err(TypeError::InvalidBinaryOp {
@@ -611,7 +652,9 @@ impl TypeChecker {
                         }
                     }
                     BinaryOp::Lt | BinaryOp::Lte | BinaryOp::Gt | BinaryOp::Gte => {
-                        if (left_ty == Type::Int && right_ty == Type::Int) || (left_ty == Type::Float && right_ty == Type::Float) {
+                        if (left_ty == Type::Int && right_ty == Type::Int)
+                            || (left_ty == Type::Float && right_ty == Type::Float)
+                        {
                             Ok(Type::Bool)
                         } else {
                             Err(TypeError::InvalidBinaryOp {
@@ -693,7 +736,11 @@ impl TypeChecker {
 
                 let callee_ty = self.check_expr(callee)?;
                 match callee_ty {
-                    Type::Function { params, return_type, .. } => {
+                    Type::Function {
+                        params,
+                        return_type,
+                        ..
+                    } => {
                         if args.len() != params.len() {
                             return Err(TypeError::ArgumentCountMismatch {
                                 expected: params.len(),
@@ -719,7 +766,11 @@ impl TypeChecker {
                     }),
                 }
             }
-            Expr::FieldAccess { target, field, span } => {
+            Expr::FieldAccess {
+                target,
+                field,
+                span,
+            } => {
                 let target_ty = self.check_expr(target)?;
                 match target_ty {
                     Type::SelfType(entity_name) | Type::Entity(entity_name) => {
@@ -733,7 +784,11 @@ impl TypeChecker {
                             Ok(field_ty.clone())
                         } else if let Some(method_sig) = entity_info.methods.get(&field.name) {
                             Ok(Type::Function {
-                                params: method_sig.params.iter().map(|(_, t, _)| t.clone()).collect(),
+                                params: method_sig
+                                    .params
+                                    .iter()
+                                    .map(|(_, t, _)| t.clone())
+                                    .collect(),
                                 return_type: Box::new(method_sig.return_type.clone()),
                                 effects: method_sig.effects.clone(),
                             })
@@ -799,7 +854,9 @@ impl TypeChecker {
                 "Bytes" => Ok(Type::Bytes),
                 "Unit" => Ok(Type::Unit),
                 name if self.entities.contains_key(name) => Ok(Type::Entity(name.to_string())),
-                name if self.capabilities.contains_key(name) => Ok(Type::Capability(name.to_string())),
+                name if self.capabilities.contains_key(name) => {
+                    Ok(Type::Capability(name.to_string()))
+                }
                 name if self.interfaces.contains_key(name) => Ok(Type::Interface(name.to_string())),
                 _ => Ok(Type::Named(id.name.clone())),
             },
@@ -812,7 +869,10 @@ impl TypeChecker {
                     let err_ty = self.resolve_type_ref(&args[1])?;
                     Ok(Type::Result(Box::new(ok_ty), Box::new(err_ty)))
                 } else if id.name == "Result" && args.is_empty() {
-                    Ok(Type::Result(Box::new(Type::Unknown), Box::new(Type::Unknown)))
+                    Ok(Type::Result(
+                        Box::new(Type::Unknown),
+                        Box::new(Type::Unknown),
+                    ))
                 } else {
                     Err(TypeError::UndefinedSymbol {
                         name: format!("{}<{}>", id.name, args.len()),
@@ -835,14 +895,7 @@ impl TypeChecker {
 
     fn define_var(&mut self, name: &str, ty: Type, is_mut: bool, span: Span) {
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(
-                name.to_string(),
-                VarInfo {
-                    ty,
-                    is_mut,
-                    span,
-                },
-            );
+            scope.insert(name.to_string(), VarInfo { ty, is_mut, span });
         }
     }
 
@@ -865,9 +918,7 @@ fn types_compatible(expected: &Type, actual: &Type) -> bool {
         (Type::Result(e_ok, e_err), Type::Result(a_ok, a_err)) => {
             types_compatible(e_ok, a_ok) && types_compatible(e_err, a_err)
         }
-        (Type::Option(e_inner), Type::Option(a_inner)) => {
-            types_compatible(e_inner, a_inner)
-        }
+        (Type::Option(e_inner), Type::Option(a_inner)) => types_compatible(e_inner, a_inner),
         _ => false,
     }
 }

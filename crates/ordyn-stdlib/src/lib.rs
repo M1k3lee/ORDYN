@@ -1,5 +1,5 @@
-use ordyn_guard::{CapHandle, SecurityKernel};
 use miette::Diagnostic;
+use ordyn_guard::{CapHandle, SecurityKernel};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -151,7 +151,8 @@ impl TransactionalStorage {
         if let Some(staging) = &mut self.active_tx {
             staging.insert(key.to_string(), Some(value.to_string()));
         } else {
-            self.committed_store.insert(key.to_string(), value.to_string());
+            self.committed_store
+                .insert(key.to_string(), value.to_string());
         }
 
         Ok(())
@@ -171,7 +172,9 @@ impl TransactionalStorage {
             }
             Ok(())
         } else {
-            Err(StdlibError::TransactionAborted("No active transaction to commit".to_string()))
+            Err(StdlibError::TransactionAborted(
+                "No active transaction to commit".to_string(),
+            ))
         }
     }
 
@@ -179,7 +182,9 @@ impl TransactionalStorage {
         if self.active_tx.take().is_some() {
             Ok(())
         } else {
-            Err(StdlibError::TransactionAborted("No active transaction to rollback".to_string()))
+            Err(StdlibError::TransactionAborted(
+                "No active transaction to rollback".to_string(),
+            ))
         }
     }
 }
@@ -197,25 +202,69 @@ mod tests {
         let mut storage = TransactionalStorage::new();
 
         // 1. Initial write
-        storage.set(&mut kernel, "BankService", write_cap, "accounts/alice", "100").unwrap();
-        assert_eq!(storage.get(&mut kernel, "BankService", read_cap, "accounts/alice").unwrap(), "100");
+        storage
+            .set(
+                &mut kernel,
+                "BankService",
+                write_cap,
+                "accounts/alice",
+                "100",
+            )
+            .unwrap();
+        assert_eq!(
+            storage
+                .get(&mut kernel, "BankService", read_cap, "accounts/alice")
+                .unwrap(),
+            "100"
+        );
 
         // 2. Transaction with Rollback
         storage.begin_transaction().unwrap();
-        storage.set(&mut kernel, "BankService", write_cap, "accounts/alice", "500").unwrap();
-        assert_eq!(storage.get(&mut kernel, "BankService", read_cap, "accounts/alice").unwrap(), "500");
+        storage
+            .set(
+                &mut kernel,
+                "BankService",
+                write_cap,
+                "accounts/alice",
+                "500",
+            )
+            .unwrap();
+        assert_eq!(
+            storage
+                .get(&mut kernel, "BankService", read_cap, "accounts/alice")
+                .unwrap(),
+            "500"
+        );
         storage.rollback().unwrap();
 
         // Must still be 100 after rollback
-        assert_eq!(storage.get(&mut kernel, "BankService", read_cap, "accounts/alice").unwrap(), "100");
+        assert_eq!(
+            storage
+                .get(&mut kernel, "BankService", read_cap, "accounts/alice")
+                .unwrap(),
+            "100"
+        );
 
         // 3. Transaction with Commit
         storage.begin_transaction().unwrap();
-        storage.set(&mut kernel, "BankService", write_cap, "accounts/alice", "750").unwrap();
+        storage
+            .set(
+                &mut kernel,
+                "BankService",
+                write_cap,
+                "accounts/alice",
+                "750",
+            )
+            .unwrap();
         storage.commit().unwrap();
 
         // Must be 750 after commit
-        assert_eq!(storage.get(&mut kernel, "BankService", read_cap, "accounts/alice").unwrap(), "750");
+        assert_eq!(
+            storage
+                .get(&mut kernel, "BankService", read_cap, "accounts/alice")
+                .unwrap(),
+            "750"
+        );
     }
 
     #[test]
@@ -227,14 +276,21 @@ mod tests {
         let mut storage = TransactionalStorage::new();
 
         // Attempting to write to system/ outside prefix is rejected
-        let err = storage.set(&mut kernel, "BankService", write_cap, "system/config", "hacked");
+        let err = storage.set(
+            &mut kernel,
+            "BankService",
+            write_cap,
+            "system/config",
+            "hacked",
+        );
         assert!(matches!(err, Err(StdlibError::Unauthorized(_))));
     }
 
     #[test]
     fn test_http_dispatch_capability_check() {
         let mut kernel = SecurityKernel::new();
-        let http_cap = kernel.issue_root_capability("HttpConnect", &["Connect"], "https://api.payments.com");
+        let http_cap =
+            kernel.issue_root_capability("HttpConnect", &["Connect"], "https://api.payments.com");
 
         let valid_req = HttpRequest {
             method: "POST".to_string(),
@@ -242,7 +298,8 @@ mod tests {
             body: "{\"amount\": 100}".to_string(),
         };
 
-        let response = HttpEngine::dispatch(&mut kernel, "PaymentProcessor", http_cap, valid_req).unwrap();
+        let response =
+            HttpEngine::dispatch(&mut kernel, "PaymentProcessor", http_cap, valid_req).unwrap();
         assert_eq!(response.status, 200);
 
         // Attempting to dispatch to unauthorized host is rejected

@@ -14,7 +14,12 @@ impl RedLabTestHarness {
         // Seed legitimate capabilities
         let _ = kernel.issue_root_capability("DatabaseAdmin", &["Read", "Write", "Drop"], "prod/");
 
-        let result = kernel.authorize(attacker_entity, CapHandle(forged_handle_val), "Drop", "prod/users");
+        let result = kernel.authorize(
+            attacker_entity,
+            CapHandle(forged_handle_val),
+            "Drop",
+            "prod/users",
+        );
         match result {
             Err(KernelError::InvalidHandle { .. }) => {
                 // Must emit an audit log with decision Trapped
@@ -91,8 +96,14 @@ mod tests {
 
     #[test]
     fn red_lab_test_capability_forgery_is_trapped() {
-        assert!(RedLabTestHarness::test_handle_forgery("InfiltratorEntity", 0x1337));
-        assert!(RedLabTestHarness::test_handle_forgery("InfiltratorEntity", 999999));
+        assert!(RedLabTestHarness::test_handle_forgery(
+            "InfiltratorEntity",
+            0x1337
+        ));
+        assert!(RedLabTestHarness::test_handle_forgery(
+            "InfiltratorEntity",
+            999999
+        ));
     }
 
     #[test]
@@ -132,8 +143,14 @@ mod tests {
         "#;
 
         // Withdrawing 500 when limit is 100 must trap
-        assert!(RedLabTestHarness::test_contract_violation_runtime_trap(banking_source, 500));
+        assert!(RedLabTestHarness::test_contract_violation_runtime_trap(
+            banking_source,
+            500
+        ));
         // Withdrawing negative amount (-50) must trap
-        assert!(RedLabTestHarness::test_contract_violation_runtime_trap(banking_source, -50));
+        assert!(RedLabTestHarness::test_contract_violation_runtime_trap(
+            banking_source,
+            -50
+        ));
     }
 }

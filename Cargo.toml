@@ -13,6 +13,7 @@ members = [
     "crates/ordyn-forge",
     "crates/ordyn-red-lab",
     "crates/ordyn-lsp",
+    "crates/ordyn-visual",
     "crates/ordyn-cli",
 ]
 resolver = "2"

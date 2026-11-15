@@ -63,6 +63,14 @@ enum Commands {
         /// Path to the package or source file
         file: PathBuf,
     },
+    /// Generate interactive visual architecture diagram (ORDYN Visual)
+    Visual {
+        /// Path to the source file (.ordyn)
+        file: PathBuf,
+        /// Optional destination for the interactive HTML export
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
     /// Run automated tests across the project
     Test,
 }
@@ -97,81 +105,109 @@ boundary MainBoundary {
 }
 "#;
             fs::write(format!("{}/main.ordyn", name), sample_code).into_diagnostic()?;
-            println!("Project '{}' created successfully with initial boundary configuration.", name);
+            println!(
+                "Project '{}' created successfully with initial boundary configuration.",
+                name
+            );
         }
         Commands::Check { file } => {
             println!("ORDYN Compiler checking: {}", file.display());
             let source = fs::read_to_string(&file).into_diagnostic()?;
-            let mut parser = Parser::from_source(&source)
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
-            let program = parser.parse_program()
-                .map_err(|e| miette::miette!("{}", e))?;
-            println!("Parsing succeeded: discovered {} top-level declarations.", program.declarations.len());
+            println!(
+                "Parsing succeeded: discovered {} top-level declarations.",
+                program.declarations.len()
+            );
 
             println!("Running static semantic and type analysis...");
             let mut checker = ordyn_types::TypeChecker::new();
-            checker.check_program(&program)
+            checker
+                .check_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Type checking succeeded: 0 errors detected.");
 
             println!("Running static effect analysis...");
             let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
-            effect_analyzer.analyze_program(&program)
+            effect_analyzer
+                .analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Effect analysis succeeded: all side-effects sound and authorized.");
 
             println!("Lowering to Typed Intermediate Representation (TIR - SSA)...");
             let mut lowerer = ordyn_ir::IrLowerer::new();
-            let ir_module = lowerer.lower_program(&program)
+            let ir_module = lowerer
+                .lower_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
-            println!("TIR Lowering succeeded: generated {} functions, {} entities.", ir_module.functions.len(), ir_module.entities.len());
+            println!(
+                "TIR Lowering succeeded: generated {} functions, {} entities.",
+                ir_module.functions.len(),
+                ir_module.entities.len()
+            );
         }
         Commands::Verify { file } => {
-            println!("ORDYN Guard verifying security invariants for: {}", file.display());
+            println!(
+                "ORDYN Guard verifying security invariants for: {}",
+                file.display()
+            );
             let source = fs::read_to_string(&file).into_diagnostic()?;
-            let mut parser = Parser::from_source(&source)
-                .map_err(|e| miette::miette!("{}", e))?;
-            let program = parser.parse_program()
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut checker = ordyn_types::TypeChecker::new();
-            checker.check_program(&program)
+            checker
+                .check_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
-            effect_analyzer.analyze_program(&program)
+            effect_analyzer
+                .analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut kernel = ordyn_guard::SecurityKernel::new();
             for decl in &program.declarations {
                 if let ordyn_ast::Declaration::Boundary(b) = decl {
                     for grant in &b.grants {
-                        kernel.issue_root_capability(&grant.capability_name.name, &["Invoke"], &b.name.name);
+                        kernel.issue_root_capability(
+                            &grant.capability_name.name,
+                            &["Invoke"],
+                            &b.name.name,
+                        );
                     }
                 }
             }
-            println!("Security Kernel initialized with {} capability grants.", kernel.audit_records().len());
+            println!(
+                "Security Kernel initialized with {} capability grants.",
+                kernel.audit_records().len()
+            );
 
             println!("Static verification baseline passed for {} declarations (contracts, effects & boundaries sound).", program.declarations.len());
         }
         Commands::Build { file, output } => {
             println!("ORDYN Compiler compiling: {}", file.display());
             let source = fs::read_to_string(&file).into_diagnostic()?;
-            let mut parser = Parser::from_source(&source)
-                .map_err(|e| miette::miette!("{}", e))?;
-            let program = parser.parse_program()
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut checker = ordyn_types::TypeChecker::new();
-            checker.check_program(&program)
+            checker
+                .check_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
-            effect_analyzer.analyze_program(&program)
+            effect_analyzer
+                .analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut lowerer = ordyn_ir::IrLowerer::new();
-            let ir_module = lowerer.lower_program(&program)
+            let ir_module = lowerer
+                .lower_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             println!("Emitting WebAssembly Core bytecode...");
@@ -179,7 +215,11 @@ boundary MainBoundary {
 
             let out_path = output.unwrap_or_else(|| file.with_extension("wasm"));
             fs::write(&out_path, &wasm_bytes).into_diagnostic()?;
-            println!("Artifact generated: {} ({} bytes)", out_path.display(), wasm_bytes.len());
+            println!(
+                "Artifact generated: {} ({} bytes)",
+                out_path.display(),
+                wasm_bytes.len()
+            );
 
             let manifest_path = out_path.with_extension("ordyn-manifest");
             let manifest_content = format!(
@@ -190,28 +230,40 @@ boundary MainBoundary {
             fs::write(&manifest_path, manifest_content).into_diagnostic()?;
             println!("Manifest generated: {}", manifest_path.display());
         }
-        Commands::Run { file, function, arg } => {
-            println!("ORDYN Runtime executing: {} (fn: {})", file.display(), function);
+        Commands::Run {
+            file,
+            function,
+            arg,
+        } => {
+            println!(
+                "ORDYN Runtime executing: {} (fn: {})",
+                file.display(),
+                function
+            );
             let source = fs::read_to_string(&file).into_diagnostic()?;
-            let mut parser = Parser::from_source(&source)
-                .map_err(|e| miette::miette!("{}", e))?;
-            let program = parser.parse_program()
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut checker = ordyn_types::TypeChecker::new();
-            checker.check_program(&program)
+            checker
+                .check_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
-            effect_analyzer.analyze_program(&program)
+            effect_analyzer
+                .analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut lowerer = ordyn_ir::IrLowerer::new();
-            let ir_module = lowerer.lower_program(&program)
+            let ir_module = lowerer
+                .lower_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut runtime = SandboxRuntime::new(ir_module, 500_000, 64);
-            let result = runtime.execute_function(&function, &[arg])
+            let result = runtime
+                .execute_function(&function, &[arg])
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Execution completed successfully. Result: {}", result);
             println!("Audit trail events: {}", runtime.audit_log().len());
@@ -219,9 +271,9 @@ boundary MainBoundary {
         Commands::Package { file, output } => {
             println!("ORDYN Forge packaging project: {}", file.display());
             let source = fs::read_to_string(&file).into_diagnostic()?;
-            let mut parser = Parser::from_source(&source)
-                .map_err(|e| miette::miette!("{}", e))?;
-            let program = parser.parse_program()
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
                 .map_err(|e| miette::miette!("{}", e))?;
 
             let mut caps = std::collections::HashSet::new();
@@ -242,33 +294,78 @@ boundary MainBoundary {
             let out_pkg = output.unwrap_or_else(|| file.with_extension("ordyn-pkg"));
             let json = serde_json_format(&sealed_pkg);
             fs::write(&out_pkg, json).into_diagnostic()?;
-            println!("Package sealed successfully: {} (hash: {})", out_pkg.display(), sealed_pkg.integrity_hash);
+            println!(
+                "Package sealed successfully: {} (hash: {})",
+                out_pkg.display(),
+                sealed_pkg.integrity_hash
+            );
         }
         Commands::Inspect { file } => {
             println!("ORDYN Inspector inspecting: {}", file.display());
             let content = fs::read_to_string(&file).into_diagnostic()?;
             if file.extension().and_then(|s| s.to_str()) == Some("ordyn") {
-                let mut parser = Parser::from_source(&content)
-                    .map_err(|e| miette::miette!("{}", e))?;
-                let program = parser.parse_program()
+                let mut parser =
+                    Parser::from_source(&content).map_err(|e| miette::miette!("{}", e))?;
+                let program = parser
+                    .parse_program()
                     .map_err(|e| miette::miette!("{}", e))?;
                 println!("=== Static Architecture Inspection ===");
                 println!("Total Declarations: {}", program.declarations.len());
                 for decl in &program.declarations {
                     match decl {
                         ordyn_ast::Declaration::Entity(e) => println!("  [Entity] {}", e.name.name),
-                        ordyn_ast::Declaration::Capability(c) => println!("  [Capability] {}", c.name.name),
-                        ordyn_ast::Declaration::Boundary(b) => println!("  [Boundary Sandbox] {}", b.name.name),
-                        ordyn_ast::Declaration::Interface(i) => println!("  [Interface Protocol] {}", i.name.name),
-                        ordyn_ast::Declaration::Contract(k) => println!("  [Formal Contract] {}", k.name.name),
-                        ordyn_ast::Declaration::Flow(fl) => println!("  [Data Flow] {}", fl.name.name),
-                        ordyn_ast::Declaration::Function(f) => println!("  [Function] {}", f.name.name),
+                        ordyn_ast::Declaration::Capability(c) => {
+                            println!("  [Capability] {}", c.name.name)
+                        }
+                        ordyn_ast::Declaration::Boundary(b) => {
+                            println!("  [Boundary Sandbox] {}", b.name.name)
+                        }
+                        ordyn_ast::Declaration::Interface(i) => {
+                            println!("  [Interface Protocol] {}", i.name.name)
+                        }
+                        ordyn_ast::Declaration::Contract(k) => {
+                            println!("  [Formal Contract] {}", k.name.name)
+                        }
+                        ordyn_ast::Declaration::Flow(fl) => {
+                            println!("  [Data Flow] {}", fl.name.name)
+                        }
+                        ordyn_ast::Declaration::Function(f) => {
+                            println!("  [Function] {}", f.name.name)
+                        }
                     }
                 }
             } else {
                 println!("Inspecting sealed package format...");
                 println!("{}", content);
             }
+        }
+        Commands::Visual { file, output } => {
+            println!(
+                "ORDYN Visual generating architecture graph for: {}",
+                file.display()
+            );
+            let source = fs::read_to_string(&file).into_diagnostic()?;
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let graph = ordyn_visual::ArchitectureGraph::from_program(&program);
+            println!(
+                "Discovered {} architectural nodes, {} security boundaries & relations.",
+                graph.nodes.len(),
+                graph.edges.len()
+            );
+            println!("\n=== Mermaid Architecture Specification ===");
+            println!("{}", graph.to_mermaid());
+
+            let html = graph.to_interactive_html(&file.file_stem().unwrap().to_string_lossy());
+            let out_html = output.unwrap_or_else(|| file.with_extension("html"));
+            fs::write(&out_html, html).into_diagnostic()?;
+            println!(
+                "Interactive visual architecture explorer exported: {}",
+                out_html.display()
+            );
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");

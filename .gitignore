@@ -14,6 +14,7 @@ Cargo.lock
 *.wat
 *.ordyn-bin
 *.ordyn-manifest
+examples/*.html
 dist/
 build/
 .temp/

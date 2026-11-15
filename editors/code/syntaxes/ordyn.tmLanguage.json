@@ -1,0 +1,93 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ORDYN",
+  "scopeName": "source.ordyn",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#constructs" },
+    { "include": "#contracts" },
+    { "include": "#types" },
+    { "include": "#effects" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.ordyn",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.ordyn",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.ordyn",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.ordyn",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.ordyn",
+      "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
+    },
+    "constructs": {
+      "patterns": [
+        {
+          "name": "storage.type.construct.ordyn",
+          "match": "\\b(entity|capability|contract|flow|boundary|interface)\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.ordyn",
+          "match": "\\b(if|else|match|return|while|for|in)\\b"
+        },
+        {
+          "name": "storage.modifier.ordyn",
+          "match": "\\b(fn|let|mut|grant|revoke|delegate|as)\\b"
+        },
+        {
+          "name": "constant.language.boolean.ordyn",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "contracts": {
+      "patterns": [
+        {
+          "name": "keyword.other.contract.ordyn",
+          "match": "\\b(requires|ensures|invariant)\\b"
+        }
+      ]
+    },
+    "effects": {
+      "patterns": [
+        {
+          "name": "keyword.other.effects.ordyn",
+          "match": "\\b(with|Pure|Io|Network|Storage|Time|Cpu|Memory)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "support.type.primitive.ordyn",
+          "match": "\\b(Int|Float|Bool|String|Void|Option|Result|List|Map)\\b"
+        }
+      ]
+    }
+  }
+}

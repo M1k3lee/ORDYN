@@ -20,6 +20,7 @@ ordyn-ir = { path = "../ordyn-ir" }
 ordyn-guard = { path = "../ordyn-guard" }
 ordyn-runtime = { path = "../ordyn-runtime" }
 ordyn-forge = { path = "../ordyn-forge" }
+ordyn-visual = { path = "../ordyn-visual" }
 clap.workspace = true
 miette.workspace = true
 thiserror.workspace = true

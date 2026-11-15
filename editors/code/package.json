@@ -1,0 +1,35 @@
+{
+  "name": "ordyn-language",
+  "displayName": "ORDYN Language Support",
+  "description": "Language support, syntax highlighting, and LSP integration for ORDYN",
+  "version": "0.1.0",
+  "publisher": "ordyn-lang",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ordyn",
+        "aliases": [
+          "ORDYN",
+          "ordyn"
+        ],
+        "extensions": [
+          ".ordyn"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ordyn",
+        "scopeName": "source.ordyn",
+        "path": "./syntaxes/ordyn.tmLanguage.json"
+      }
+    ]
+  }
+}
