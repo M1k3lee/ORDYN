@@ -73,6 +73,12 @@ boundary MainBoundary {
             checker.check_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Type checking succeeded: 0 errors detected.");
+
+            println!("Running static effect analysis...");
+            let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
+            effect_analyzer.analyze_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+            println!("Effect analysis succeeded: all side-effects sound and authorized.");
         }
         Commands::Verify { file } => {
             println!("ORDYN Guard verifying security invariants for: {}", file.display());
@@ -85,7 +91,12 @@ boundary MainBoundary {
             let mut checker = ordyn_types::TypeChecker::new();
             checker.check_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
-            println!("Static verification baseline passed for {} declarations (contracts & boundaries sound).", program.declarations.len());
+
+            let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
+            effect_analyzer.analyze_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            println!("Static verification baseline passed for {} declarations (contracts, effects & boundaries sound).", program.declarations.len());
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");
