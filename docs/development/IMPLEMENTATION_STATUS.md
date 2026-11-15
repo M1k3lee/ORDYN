@@ -1,6 +1,6 @@
 # ORDYN Implementation Status Matrix
 
-**Last Updated:** Milestone 4 (Compiler Backend, WebAssembly Emitter & Sandboxed Execution Runtime)  
+**Last Updated:** Milestone 5 (Application Development Ecosystem & Standard Library)  
 **Reference Specification:** ORDYN Language Specification v0.1  
 
 ---
@@ -27,11 +27,13 @@
 | **Compiler Backend**| WASM Emitter (`ordyn-runtime`)| Implemented | 1 unit test passing | Tested | WebAssembly Core binary emission |
 | **Execution Host** | Sandbox Runtime (`ordyn-runtime`)| Implemented | 2 unit tests passing | Tested | Execution engine, contract traps, fuel governor |
 | **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `new` commands |
-| **Runtime** | Memory Ceiling Governor | Implemented | Memory bounds checking | Tested | Max memory page limits enforced |
+| **Standard Library**| Transactional Storage (`ordyn-stdlib`)| Implemented | 2 unit tests passing | Tested | ACID commit/rollback, capability checks |
+| **Standard Library**| HTTP Transport (`ordyn-stdlib`)| Implemented | 1 unit test passing | Tested | Capability-checked request dispatch |
+| **Applications** | Secure Banking Service | Implemented | End-to-end verified | Tested | `examples/secure_banking_service.ordyn` |
 
 ---
 
-## 2. Test Evidence Log
+## 2. Test Evidence Log (20 Automated Tests Passing)
 
 - `ordyn_lexer::tests::test_lex_basic_tokens`: PASSED
 - `ordyn_lexer::tests::test_lex_keywords_and_symbols`: PASSED
@@ -53,8 +55,9 @@
 - `ordyn_runtime::tests::test_wasm_emitter_generates_valid_magic_header`: PASSED
 - `ordyn_runtime::tests::test_runtime_execution_with_contracts_and_fuel`: PASSED
 - `ordyn_runtime::tests::test_runtime_fuel_exhaustion_trips_trap`: PASSED
-- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> PASSED
-- CLI verification: `ordyn verify examples/hello_boundary.ordyn` -> PASSED
-- CLI verification: `ordyn build examples/hello_boundary.ordyn` -> Generated `examples/hello_boundary.wasm` and `examples/hello_boundary.ordyn-manifest`
-- CLI verification: `ordyn run examples/hello_boundary.ordyn --function deposit --arg 100` -> PASSED
-- CLI verification: `ordyn run examples/hello_boundary.ordyn --function deposit --arg -50` -> TRAPPED (`Requires violation: Precondition failed`)
+- `ordyn_stdlib::tests::test_transactional_storage_commit_and_rollback`: PASSED
+- `ordyn_stdlib::tests::test_storage_capability_boundary_enforcement`: PASSED
+- `ordyn_stdlib::tests::test_http_dispatch_capability_check`: PASSED
+- CLI verification: `ordyn check examples/secure_banking_service.ordyn` -> PASSED
+- CLI verification: `ordyn build examples/secure_banking_service.ordyn` -> Generated `examples/secure_banking_service.wasm` and manifest
+- CLI verification: `ordyn run examples/secure_banking_service.ordyn --function deposit --arg 250` -> PASSED

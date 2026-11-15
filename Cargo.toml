@@ -9,6 +9,7 @@ members = [
     "crates/ordyn-ir",
     "crates/ordyn-guard",
     "crates/ordyn-runtime",
+    "crates/ordyn-stdlib",
     "crates/ordyn-cli",
 ]
 resolver = "2"

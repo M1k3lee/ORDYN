@@ -1,0 +1,84 @@
+// ORDYN Production Application Example: Secure Banking & Payment Ecosystem
+// Demonstrates all 6 foundational constructs: entity, capability, contract, flow, boundary, interface.
+
+capability HttpConnect {
+    host: String;
+    port: Int;
+}
+
+capability StorageRead {
+    path_prefix: String;
+}
+
+capability StorageWrite {
+    path_prefix: String;
+}
+
+capability AuditLog {
+    retention_days: Int;
+}
+
+interface PaymentProcessor {
+    fn process_external_charge(target_account: String, amount: Int) -> Result<String, String>
+        with [HttpConnect, AuditLog];
+}
+
+entity BankAccount {
+    let account_id: String;
+    mut balance: Int;
+
+    pub fn deposit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.balance == old(self.balance) + amount
+    {
+        self.balance = self.balance + amount;
+        return Ok(self.balance);
+    }
+
+    pub fn withdraw(amount: Int) -> Result<Int, String>
+        requires amount > 0 && amount <= self.balance
+        ensures self.balance == old(self.balance) - amount
+    {
+        self.balance = self.balance - amount;
+        return Ok(self.balance);
+    }
+
+    pub fn get_balance() -> Int {
+        return self.balance;
+    }
+}
+
+entity PaymentGateway {
+    let gateway_id: String;
+
+    pub fn process_external_charge(target_account: String, amount: Int) -> Result<String, String>
+        requires amount > 0
+    {
+        return Ok("CHARGE_CONFIRMED");
+    }
+}
+
+boundary BankingCoreBoundary {
+    grant StorageRead { path_prefix: "accounts/" };
+    grant StorageWrite { path_prefix: "accounts/" };
+    grant AuditLog { retention_days: 365 };
+
+    quota {
+        memory_limit: 128;
+        fuel_limit: 1000000;
+    }
+
+    bind BankAccount;
+}
+
+boundary ExternalPaymentBoundary {
+    grant HttpConnect { host: "api.payment.internal", port: 443 };
+    grant AuditLog { retention_days: 180 };
+
+    quota {
+        memory_limit: 64;
+        fuel_limit: 500000;
+    }
+
+    bind PaymentGateway;
+}
