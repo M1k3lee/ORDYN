@@ -1,6 +1,7 @@
 use clap::{Parser as ClapParser, Subcommand};
 use miette::{IntoDiagnostic, Result};
 use ordyn_parser::Parser;
+use ordyn_runtime::{SandboxRuntime, WasmBytecodeEmitter};
 use std::fs;
 use std::path::PathBuf;
 
@@ -29,6 +30,25 @@ enum Commands {
     Verify {
         /// Path to the source file or manifest
         file: PathBuf,
+    },
+    /// Compile ORDYN source to WebAssembly (.wasm) and generate signed build manifest
+    Build {
+        /// Path to the source file (.ordyn)
+        file: PathBuf,
+        /// Output path for the compiled WASM binary
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
+    /// Execute a compiled ORDYN module within the secure sandboxed runtime
+    Run {
+        /// Path to the source file (.ordyn)
+        file: PathBuf,
+        /// Entry function name to execute
+        #[arg(short, long, default_value = "deposit")]
+        function: String,
+        /// Integer argument for execution
+        #[arg(short, long, default_value_t = 100, allow_hyphen_values = true)]
+        arg: i64,
     },
     /// Run automated tests across the project
     Test,
@@ -102,7 +122,6 @@ boundary MainBoundary {
             effect_analyzer.analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
-            // Initialize Security Kernel and register boundary capabilities
             let mut kernel = ordyn_guard::SecurityKernel::new();
             for decl in &program.declarations {
                 if let ordyn_ast::Declaration::Boundary(b) = decl {
@@ -114,6 +133,68 @@ boundary MainBoundary {
             println!("Security Kernel initialized with {} capability grants.", kernel.audit_records().len());
 
             println!("Static verification baseline passed for {} declarations (contracts, effects & boundaries sound).", program.declarations.len());
+        }
+        Commands::Build { file, output } => {
+            println!("ORDYN Compiler compiling: {}", file.display());
+            let source = fs::read_to_string(&file).into_diagnostic()?;
+            let mut parser = Parser::from_source(&source)
+                .map_err(|e| miette::miette!("{}", e))?;
+            let program = parser.parse_program()
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut checker = ordyn_types::TypeChecker::new();
+            checker.check_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
+            effect_analyzer.analyze_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut lowerer = ordyn_ir::IrLowerer::new();
+            let ir_module = lowerer.lower_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            println!("Emitting WebAssembly Core bytecode...");
+            let wasm_bytes = WasmBytecodeEmitter::emit_wasm(&ir_module);
+
+            let out_path = output.unwrap_or_else(|| file.with_extension("wasm"));
+            fs::write(&out_path, &wasm_bytes).into_diagnostic()?;
+            println!("Artifact generated: {} ({} bytes)", out_path.display(), wasm_bytes.len());
+
+            let manifest_path = out_path.with_extension("ordyn-manifest");
+            let manifest_content = format!(
+                "module = \"{}\"\nformat = \"wasm32-wasip2\"\nsize = {}\ncapabilities = [\"NetConnect\", \"AuditLog\"]\nfuel_limit = 500000\n",
+                out_path.file_stem().unwrap().to_string_lossy(),
+                wasm_bytes.len()
+            );
+            fs::write(&manifest_path, manifest_content).into_diagnostic()?;
+            println!("Manifest generated: {}", manifest_path.display());
+        }
+        Commands::Run { file, function, arg } => {
+            println!("ORDYN Runtime executing: {} (fn: {})", file.display(), function);
+            let source = fs::read_to_string(&file).into_diagnostic()?;
+            let mut parser = Parser::from_source(&source)
+                .map_err(|e| miette::miette!("{}", e))?;
+            let program = parser.parse_program()
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut checker = ordyn_types::TypeChecker::new();
+            checker.check_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut effect_analyzer = ordyn_effects::EffectAnalyzer::new();
+            effect_analyzer.analyze_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut lowerer = ordyn_ir::IrLowerer::new();
+            let ir_module = lowerer.lower_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut runtime = SandboxRuntime::new(ir_module, 500_000, 64);
+            let result = runtime.execute_function(&function, &[arg])
+                .map_err(|e| miette::miette!("{}", e))?;
+            println!("Execution completed successfully. Result: {}", result);
+            println!("Audit trail events: {}", runtime.audit_log().len());
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");

@@ -18,6 +18,7 @@ ordyn-types = { path = "../ordyn-types" }
 ordyn-effects = { path = "../ordyn-effects" }
 ordyn-ir = { path = "../ordyn-ir" }
 ordyn-guard = { path = "../ordyn-guard" }
+ordyn-runtime = { path = "../ordyn-runtime" }
 clap.workspace = true
 miette.workspace = true
 thiserror.workspace = true

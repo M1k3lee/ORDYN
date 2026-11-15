@@ -1,6 +1,6 @@
 # ORDYN Implementation Status Matrix
 
-**Last Updated:** Milestone 3 Foundations (Security Kernel & Capability Engine)  
+**Last Updated:** Milestone 4 (Compiler Backend, WebAssembly Emitter & Sandboxed Execution Runtime)  
 **Reference Specification:** ORDYN Language Specification v0.1  
 
 ---
@@ -24,10 +24,10 @@
 | **Security (Guard)**| Security Kernel (`ordyn-guard`) | Implemented | 3 unit tests passing | Tested | Opaque handles, monotonic attenuation, revocation |
 | **Security (Guard)**| Capability Table | Implemented | Table lookup verified | Tested | Unforgeable handle directory in kernel memory |
 | **Security (Guard)**| Audit Engine | Implemented | Audit events recorded | Tested | Monotonic timestamped binary records |
-| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `new` commands |
-| **Compiler (Core)** | WASM Backend | Planned (M4) | Planned | Planned | Deterministic WASM output |
-| **Runtime** | Wasmtime Host | Planned (M4) | Planned | Planned | WASM sandbox isolation |
-| **Runtime** | Fuel / Memory Limits | Planned (M4) | Planned | Planned | DoS prevention |
+| **Compiler Backend**| WASM Emitter (`ordyn-runtime`)| Implemented | 1 unit test passing | Tested | WebAssembly Core binary emission |
+| **Execution Host** | Sandbox Runtime (`ordyn-runtime`)| Implemented | 2 unit tests passing | Tested | Execution engine, contract traps, fuel governor |
+| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `new` commands |
+| **Runtime** | Memory Ceiling Governor | Implemented | Memory bounds checking | Tested | Max memory page limits enforced |
 
 ---
 
@@ -50,5 +50,11 @@
 - `ordyn_guard::tests::test_valid_capability_authorization`: PASSED
 - `ordyn_guard::tests::test_forged_handle_trapped`: PASSED
 - `ordyn_guard::tests::test_monotonic_attenuation_and_cascading_revocation`: PASSED
-- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> `TIR Lowering succeeded: generated 0 functions, 1 entities.`
-- CLI verification: `ordyn verify examples/hello_boundary.ordyn` -> `Static verification baseline passed for 5 declarations.`
+- `ordyn_runtime::tests::test_wasm_emitter_generates_valid_magic_header`: PASSED
+- `ordyn_runtime::tests::test_runtime_execution_with_contracts_and_fuel`: PASSED
+- `ordyn_runtime::tests::test_runtime_fuel_exhaustion_trips_trap`: PASSED
+- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> PASSED
+- CLI verification: `ordyn verify examples/hello_boundary.ordyn` -> PASSED
+- CLI verification: `ordyn build examples/hello_boundary.ordyn` -> Generated `examples/hello_boundary.wasm` and `examples/hello_boundary.ordyn-manifest`
+- CLI verification: `ordyn run examples/hello_boundary.ordyn --function deposit --arg 100` -> PASSED
+- CLI verification: `ordyn run examples/hello_boundary.ordyn --function deposit --arg -50` -> TRAPPED (`Requires violation: Precondition failed`)
