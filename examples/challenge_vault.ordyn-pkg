@@ -1,0 +1,6 @@
+{
+  "name": "challenge_vault",
+  "version": "0.1.0",
+  "integrity_hash": "e241cb424c501a95",
+  "capabilities": {"AuditScribe", "MasterKey", "NetDrain"}
+}

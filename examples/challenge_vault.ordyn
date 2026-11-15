@@ -1,0 +1,62 @@
+// ORDYN Sovereign Security Challenge: The Untouchable Vault
+// Bounty: $1,000,000 Zero-Day Reward to anyone who can extract the Sovereign Flag.
+// Enforces Zero Ambient Authority, Compile-Time Effect Tracking, and Formal Contracts.
+
+capability MasterKey {
+    key_hash: String;
+    permission_level: Int;
+}
+
+capability AuditScribe {
+    log_destination: String;
+}
+
+capability NetDrain {
+    destination: String;
+    max_bandwidth: Int;
+}
+
+interface VaultDefenseProtocol {
+    fn attempt_drain(amount: Int) -> Result<String, String>
+        with [AuditScribe];
+}
+
+entity SovereignVault {
+    let vault_id: String;
+    let bounty_flag: String;
+    mut vault_balance: Int;
+    mut intrusion_attempts: Int;
+
+    pub fn deposit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.vault_balance == old(self.vault_balance) + amount
+    {
+        self.vault_balance = self.vault_balance + amount;
+        return Ok(self.vault_balance);
+    }
+
+    pub fn withdraw(amount: Int) -> Result<Int, String>
+        requires amount > 0 && amount <= self.vault_balance
+        ensures self.vault_balance == old(self.vault_balance) - amount
+    {
+        self.vault_balance = self.vault_balance - amount;
+        return Ok(self.vault_balance);
+    }
+
+    pub fn claim_bounty(forged_code: String) -> Result<String, String>
+        requires self.vault_balance == 0
+    {
+        return Ok(self.bounty_flag);
+    }
+}
+
+boundary DefensePerimeterBoundary {
+    grant AuditScribe { log_destination: "syslog://sovereign.audit" };
+
+    quota {
+        memory_limit: 32;
+        fuel_limit: 100000;
+    }
+
+    bind SovereignVault;
+}
