@@ -50,8 +50,28 @@ enum Commands {
         #[arg(short, long, default_value_t = 100, allow_hyphen_values = true)]
         arg: i64,
     },
+    /// Package an ORDYN project into a sealed verifiable archive (.ordyn-pkg)
+    Package {
+        /// Path to the source file (.ordyn)
+        file: PathBuf,
+        /// Output package destination
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
+    /// Inspect an ORDYN package or source file (extract capabilities, entities, and quotas statically)
+    Inspect {
+        /// Path to the package or source file
+        file: PathBuf,
+    },
     /// Run automated tests across the project
     Test,
+}
+
+fn serde_json_format(pkg: &ordyn_forge::SealedPackage) -> String {
+    format!(
+        "{{\n  \"name\": \"{}\",\n  \"version\": \"{}\",\n  \"integrity_hash\": \"{}\",\n  \"capabilities\": {:?}\n}}\n",
+        pkg.manifest.name, pkg.manifest.version, pkg.integrity_hash, pkg.manifest.declared_capabilities
+    )
 }
 
 fn main() -> Result<()> {
@@ -195,6 +215,60 @@ boundary MainBoundary {
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Execution completed successfully. Result: {}", result);
             println!("Audit trail events: {}", runtime.audit_log().len());
+        }
+        Commands::Package { file, output } => {
+            println!("ORDYN Forge packaging project: {}", file.display());
+            let source = fs::read_to_string(&file).into_diagnostic()?;
+            let mut parser = Parser::from_source(&source)
+                .map_err(|e| miette::miette!("{}", e))?;
+            let program = parser.parse_program()
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mut caps = std::collections::HashSet::new();
+            for decl in &program.declarations {
+                if let ordyn_ast::Declaration::Capability(c) = decl {
+                    caps.insert(c.name.name.clone());
+                }
+            }
+
+            let manifest = ordyn_forge::PackageManifest {
+                name: file.file_stem().unwrap().to_string_lossy().to_string(),
+                version: "0.1.0".to_string(),
+                declared_capabilities: caps,
+                dependencies: std::collections::HashMap::new(),
+            };
+
+            let sealed_pkg = ordyn_forge::PackagePackager::package_project(manifest, &source);
+            let out_pkg = output.unwrap_or_else(|| file.with_extension("ordyn-pkg"));
+            let json = serde_json_format(&sealed_pkg);
+            fs::write(&out_pkg, json).into_diagnostic()?;
+            println!("Package sealed successfully: {} (hash: {})", out_pkg.display(), sealed_pkg.integrity_hash);
+        }
+        Commands::Inspect { file } => {
+            println!("ORDYN Inspector inspecting: {}", file.display());
+            let content = fs::read_to_string(&file).into_diagnostic()?;
+            if file.extension().and_then(|s| s.to_str()) == Some("ordyn") {
+                let mut parser = Parser::from_source(&content)
+                    .map_err(|e| miette::miette!("{}", e))?;
+                let program = parser.parse_program()
+                    .map_err(|e| miette::miette!("{}", e))?;
+                println!("=== Static Architecture Inspection ===");
+                println!("Total Declarations: {}", program.declarations.len());
+                for decl in &program.declarations {
+                    match decl {
+                        ordyn_ast::Declaration::Entity(e) => println!("  [Entity] {}", e.name.name),
+                        ordyn_ast::Declaration::Capability(c) => println!("  [Capability] {}", c.name.name),
+                        ordyn_ast::Declaration::Boundary(b) => println!("  [Boundary Sandbox] {}", b.name.name),
+                        ordyn_ast::Declaration::Interface(i) => println!("  [Interface Protocol] {}", i.name.name),
+                        ordyn_ast::Declaration::Contract(k) => println!("  [Formal Contract] {}", k.name.name),
+                        ordyn_ast::Declaration::Flow(fl) => println!("  [Data Flow] {}", fl.name.name),
+                        ordyn_ast::Declaration::Function(f) => println!("  [Function] {}", f.name.name),
+                    }
+                }
+            } else {
+                println!("Inspecting sealed package format...");
+                println!("{}", content);
+            }
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");

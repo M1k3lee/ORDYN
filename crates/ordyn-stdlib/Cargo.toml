@@ -6,7 +6,6 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-ordyn-diagnostics = { path = "../ordyn-diagnostics" }
 ordyn-guard = { path = "../ordyn-guard" }
 thiserror.workspace = true
 miette.workspace = true

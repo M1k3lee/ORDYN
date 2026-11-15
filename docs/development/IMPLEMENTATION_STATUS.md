@@ -1,6 +1,6 @@
 # ORDYN Implementation Status Matrix
 
-**Last Updated:** Milestone 5 (Application Development Ecosystem & Standard Library)  
+**Last Updated:** Milestone 6 (Developer Tooling, Packaging & ORDYN Forge)  
 **Reference Specification:** ORDYN Language Specification v0.1  
 
 ---
@@ -26,14 +26,15 @@
 | **Security (Guard)**| Audit Engine | Implemented | Audit events recorded | Tested | Monotonic timestamped binary records |
 | **Compiler Backend**| WASM Emitter (`ordyn-runtime`)| Implemented | 1 unit test passing | Tested | WebAssembly Core binary emission |
 | **Execution Host** | Sandbox Runtime (`ordyn-runtime`)| Implemented | 2 unit tests passing | Tested | Execution engine, contract traps, fuel governor |
-| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `new` commands |
 | **Standard Library**| Transactional Storage (`ordyn-stdlib`)| Implemented | 2 unit tests passing | Tested | ACID commit/rollback, capability checks |
 | **Standard Library**| HTTP Transport (`ordyn-stdlib`)| Implemented | 1 unit test passing | Tested | Capability-checked request dispatch |
+| **Package & Forge** | Packaging & Forge (`ordyn-forge`)| Implemented | 2 unit tests passing | Tested | Zero ambient authority on dependencies |
+| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `package`, `inspect`, `new` |
 | **Applications** | Secure Banking Service | Implemented | End-to-end verified | Tested | `examples/secure_banking_service.ordyn` |
 
 ---
 
-## 2. Test Evidence Log (20 Automated Tests Passing)
+## 2. Test Evidence Log (22 Automated Tests Passing)
 
 - `ordyn_lexer::tests::test_lex_basic_tokens`: PASSED
 - `ordyn_lexer::tests::test_lex_keywords_and_symbols`: PASSED
@@ -58,6 +59,10 @@
 - `ordyn_stdlib::tests::test_transactional_storage_commit_and_rollback`: PASSED
 - `ordyn_stdlib::tests::test_storage_capability_boundary_enforcement`: PASSED
 - `ordyn_stdlib::tests::test_http_dispatch_capability_check`: PASSED
+- `ordyn_forge::tests::test_forge_enforces_zero_ambient_authority_on_dependencies`: PASSED
+- `ordyn_forge::tests::test_package_builder_and_inspector`: PASSED
 - CLI verification: `ordyn check examples/secure_banking_service.ordyn` -> PASSED
-- CLI verification: `ordyn build examples/secure_banking_service.ordyn` -> Generated `examples/secure_banking_service.wasm` and manifest
+- CLI verification: `ordyn build examples/secure_banking_service.ordyn` -> PASSED
 - CLI verification: `ordyn run examples/secure_banking_service.ordyn --function deposit --arg 250` -> PASSED
+- CLI verification: `ordyn package examples/secure_banking_service.ordyn` -> Generated `examples/secure_banking_service.ordyn-pkg`
+- CLI verification: `ordyn inspect examples/secure_banking_service.ordyn-pkg` -> PASSED

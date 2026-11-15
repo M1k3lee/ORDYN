@@ -1,0 +1,6 @@
+{
+  "name": "secure_banking_service",
+  "version": "0.1.0",
+  "integrity_hash": "08d038fa6f91540d",
+  "capabilities": {"HttpConnect", "StorageRead", "StorageWrite", "AuditLog"}
+}
