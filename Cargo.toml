@@ -15,6 +15,7 @@ members = [
     "crates/ordyn-lsp",
     "crates/ordyn-visual",
     "crates/ordyn-cli",
+    "crates/ordyn-wasm",
 ]
 resolver = "2"
 

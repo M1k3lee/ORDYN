@@ -11,6 +11,7 @@ Cargo.lock
 
 # Test / Output Artifacts
 *.wasm
+!demo/*.wasm
 *.wat
 *.ordyn-bin
 *.ordyn-manifest

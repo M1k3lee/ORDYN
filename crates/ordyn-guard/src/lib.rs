@@ -83,10 +83,13 @@ impl AuditEngine {
         resource: &str,
         decision: AuditDecision,
     ) {
+        #[cfg(not(target_arch = "wasm32"))]
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_micros() as u64)
             .unwrap_or(0);
+        #[cfg(target_arch = "wasm32")]
+        let timestamp = self.records.len() as u64 + 1;
 
         self.records.push(AuditRecord {
             timestamp_micros: timestamp,
