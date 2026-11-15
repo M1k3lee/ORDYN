@@ -79,6 +79,12 @@ boundary MainBoundary {
             effect_analyzer.analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
             println!("Effect analysis succeeded: all side-effects sound and authorized.");
+
+            println!("Lowering to Typed Intermediate Representation (TIR - SSA)...");
+            let mut lowerer = ordyn_ir::IrLowerer::new();
+            let ir_module = lowerer.lower_program(&program)
+                .map_err(|e| miette::miette!("{}", e))?;
+            println!("TIR Lowering succeeded: generated {} functions, {} entities.", ir_module.functions.len(), ir_module.entities.len());
         }
         Commands::Verify { file } => {
             println!("ORDYN Guard verifying security invariants for: {}", file.display());

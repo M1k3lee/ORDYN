@@ -1,0 +1,15 @@
+[package]
+name = "ordyn-ir"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ordyn-diagnostics = { path = "../ordyn-diagnostics" }
+ordyn-ast = { path = "../ordyn-ast" }
+thiserror.workspace = true
+miette.workspace = true
+
+[dev-dependencies]
+ordyn-parser = { path = "../ordyn-parser" }
