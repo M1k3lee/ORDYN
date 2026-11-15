@@ -1,6 +1,6 @@
 # ORDYN Implementation Status Matrix
 
-**Last Updated:** Milestone 1 Phase 2 (Type Checker & Semantic Analyzer)  
+**Last Updated:** Milestone 3 Foundations (Security Kernel & Capability Engine)  
 **Reference Specification:** ORDYN Language Specification v0.1  
 
 ---
@@ -19,15 +19,13 @@
 | **Compiler (Core)** | Lexer (`ordyn-lexer`) | Implemented | 3 unit tests passing | Tested | Zero-copy tokens, spans, keywords |
 | **Compiler (Core)** | Parser (`ordyn-parser`)| Implemented | 3 unit/integration tests | Tested | Recursive descent, Pratt expressions |
 | **Compiler (Core)** | Type Checker (`ordyn-types`)| Implemented | 4 unit tests passing | Tested | Scopes, type inference, contracts, mutability |
+| **Compiler (Core)** | Effect Analyzer (`ordyn-effects`)| Implemented | 3 unit tests passing | Tested | Algebraic effects & caller propagation |
+| **Compiler (Core)** | Typed IR (`ordyn-ir`) | Implemented | 1 unit test passing | Tested | SSA form, basic blocks, ContractAssert |
+| **Security (Guard)**| Security Kernel (`ordyn-guard`) | Implemented | 3 unit tests passing | Tested | Opaque handles, monotonic attenuation, revocation |
+| **Security (Guard)**| Capability Table | Implemented | Table lookup verified | Tested | Unforgeable handle directory in kernel memory |
+| **Security (Guard)**| Audit Engine | Implemented | Audit events recorded | Tested | Monotonic timestamped binary records |
 | **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `new` commands |
-| **Compiler (Core)** | Effect Analyzer (`ordyn-effects`)| Planned (M2) | Planned | Planned | Static effect lattice |
-| **Compiler (Core)** | Information-Flow | Planned (M2) | Planned | Planned | Label lattice checking |
-| **Compiler (Core)** | Contract Verifier | Planned (M2) | Planned | Planned | Invariant & pre/post checks |
-| **Compiler (Core)** | TIR & Optimizer | Planned (M2) | Planned | Planned | SSA-form IR |
 | **Compiler (Core)** | WASM Backend | Planned (M4) | Planned | Planned | Deterministic WASM output |
-| **Security (Guard)**| Security Kernel | Planned (M3) | Planned | Planned | TCB capability management |
-| **Security (Guard)**| Capability Table | Planned (M3) | Planned | Planned | Unforgeable handle directory |
-| **Security (Guard)**| Audit Logger | Planned (M3) | Planned | Planned | Structured binary audit events |
 | **Runtime** | Wasmtime Host | Planned (M4) | Planned | Planned | WASM sandbox isolation |
 | **Runtime** | Fuel / Memory Limits | Planned (M4) | Planned | Planned | DoS prevention |
 
@@ -45,5 +43,12 @@
 - `ordyn_types::tests::test_immutable_assignment_rejected`: PASSED
 - `ordyn_types::tests::test_contract_non_boolean_rejected`: PASSED
 - `ordyn_types::tests::test_type_mismatch_rejected`: PASSED
-- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> `Type checking succeeded: 0 errors detected.`
+- `ordyn_effects::tests::test_pure_function_calling_pure_function_allowed`: PASSED
+- `ordyn_effects::tests::test_pure_function_calling_effectful_function_rejected`: PASSED
+- `ordyn_effects::tests::test_effectful_caller_with_matching_effects_allowed`: PASSED
+- `ordyn_ir::tests::test_lower_function_with_contracts`: PASSED
+- `ordyn_guard::tests::test_valid_capability_authorization`: PASSED
+- `ordyn_guard::tests::test_forged_handle_trapped`: PASSED
+- `ordyn_guard::tests::test_monotonic_attenuation_and_cascading_revocation`: PASSED
+- CLI verification: `ordyn check examples/hello_boundary.ordyn` -> `TIR Lowering succeeded: generated 0 functions, 1 entities.`
 - CLI verification: `ordyn verify examples/hello_boundary.ordyn` -> `Static verification baseline passed for 5 declarations.`

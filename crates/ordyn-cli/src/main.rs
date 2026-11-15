@@ -102,6 +102,17 @@ boundary MainBoundary {
             effect_analyzer.analyze_program(&program)
                 .map_err(|e| miette::miette!("{}", e))?;
 
+            // Initialize Security Kernel and register boundary capabilities
+            let mut kernel = ordyn_guard::SecurityKernel::new();
+            for decl in &program.declarations {
+                if let ordyn_ast::Declaration::Boundary(b) = decl {
+                    for grant in &b.grants {
+                        kernel.issue_root_capability(&grant.capability_name.name, &["Invoke"], &b.name.name);
+                    }
+                }
+            }
+            println!("Security Kernel initialized with {} capability grants.", kernel.audit_records().len());
+
             println!("Static verification baseline passed for {} declarations (contracts, effects & boundaries sound).", program.declarations.len());
         }
         Commands::Test => {

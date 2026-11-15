@@ -7,6 +7,7 @@ members = [
     "crates/ordyn-types",
     "crates/ordyn-effects",
     "crates/ordyn-ir",
+    "crates/ordyn-guard",
     "crates/ordyn-cli",
 ]
 resolver = "2"
