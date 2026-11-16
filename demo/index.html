@@ -615,15 +615,15 @@
 
             <p class="hero-lead">
                 Every major hack in software history—reentrancy underflows, forged session tokens, covert network leaks, and thread locking—happens because programming languages grant code <strong>ambient authority by default</strong>. 
-                ORDYN eliminates ambient authority entirely. Below is a live sovereign vault containing <strong>$1,000,000</strong> written in pure ORDYN code. Try to hack it.
+                ORDYN eliminates ambient authority entirely. Below is a live sovereign vault containing <strong>1,000,000 SOV</strong> (simulated testnet tokens) written in pure ORDYN code. Try to hack it.
             </p>
 
             <!-- Live HUD Stats -->
             <div class="hud-grid">
                 <div class="hud-card green">
                     <div class="hud-label">Sovereign Vault Reserve</div>
-                    <div class="hud-value">$1,000,000</div>
-                    <div class="hud-sub">Protected by formal contracts</div>
+                    <div class="hud-value">1,000,000 SOV</div>
+                    <div class="hud-sub">Simulated Testnet Assets (No Cash Value)</div>
                 </div>
                 <div class="hud-card">
                     <div class="hud-label">Attacks Intercepted</div>
@@ -953,6 +953,9 @@ graph TD
         <div class="container footer-inner">
             <div>
                 <strong>ORDYN Sovereign Computing Architecture</strong> &bull; Complete, Verified &amp; On Git
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+                    * Notice: Educational Capture-The-Flag (CTF) demonstration. Sovereign coins (SOV) are simulated testnet assets with zero fiat or monetary cash value. Valid zero-day vulnerabilities earn official attribution in the ORDYN Security Hall of Fame.
+                </div>
             </div>
             <div style="display: flex; gap: 16px;">
                 <a href="https://github.com/M1k3lee/ORDYN" target="_blank">GitHub Repository</a>
@@ -966,7 +969,7 @@ graph TD
     <script>
         const SNIPPETS = {
             clean: `// ORDYN Sovereign Security Challenge: The Untouchable Vault
-// Target Reserve: $1,000,000 (1,000,000 SOV coins)
+// Target Reserve: 1,000,000 SOV (Simulated Testnet Tokens)
 // Enforces Zero Ambient Authority, Compile-Time Effect Analysis, and Formal Contracts.
 
 capability MasterKey {
@@ -1184,7 +1187,7 @@ entity Exploiter {
     <pre style="margin-top:6px; color:#ff9494; font-size:11px;">${diagText}</pre>
     <div class="term-dim" style="margin-top:6px;">Audit Hash: <code class="term-cyan">${res.audit_hash}</code> | Decision: <strong>IRREVOCABLY_TRAPPED</strong></div>
 </div>
-<span class="term-green">✓ VAULT DEFENSE INTACT: Balance remains $1,000,000. 0 tokens lost.</span>
+<span class="term-green">✓ VAULT DEFENSE INTACT: Balance remains 1,000,000 SOV. 0 tokens lost.</span>
 <span class="term-white">root@ordyn-arena:~#</span> `;
                 
                 term.scrollTop = term.scrollHeight;

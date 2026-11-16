@@ -25,7 +25,7 @@
 > Launch real attack vectors (Capability Forgery, Lattice Widening, Contract Underflow, SSRF Egress, and ReDoS Starvation) directly against the ORDYN Security Kernel:  
 > 🔗 **[Launch Interactive Challenge Website (m1k3lee.github.io/ORDYN)](https://m1k3lee.github.io/ORDYN/)**
 
-- **Target Program:** [`examples/challenge_vault.ordyn`](examples/challenge_vault.ordyn) ($1,000,000 Zero-Day Bounty Reserve)
+- **Target Program:** [`examples/challenge_vault.ordyn`](examples/challenge_vault.ordyn) (1,000,000 SOV Simulated CTF Vault Prize)
 - **Local Runner:** `python demo/server.py` &rarr; `http://localhost:8088`
 - **Features:** Real-time attack console, live architectural DAG explorer, custom payload compiler, and cryptographic audit trail receipts.
 

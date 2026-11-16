@@ -4,7 +4,7 @@ An interactive live demonstration and exploit playground built to test and prove
 
 ---
 
-## 🎯 The Challenge: $1,000,000 Zero-Day Bounty
+## 🎯 The Challenge: 1,000,000 SOV Simulated Bounty (CTF Arena)
 
 The target is the `SovereignVault` entity defined in `examples/challenge_vault.ordyn`, initialized with **1,000,000 SOV tokens** and isolated behind a strict `DefensePerimeterBoundary`.
 

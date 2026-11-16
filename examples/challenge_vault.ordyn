@@ -1,5 +1,5 @@
 // ORDYN Sovereign Security Challenge: The Untouchable Vault
-// Bounty: $1,000,000 Zero-Day Reward to anyone who can extract the Sovereign Flag.
+// Reward: 1,000,000 SOV (Simulated Testnet CTF Flag Prize)
 // Enforces Zero Ambient Authority, Compile-Time Effect Tracking, and Formal Contracts.
 
 capability MasterKey {
