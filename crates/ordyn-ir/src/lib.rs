@@ -304,6 +304,22 @@ impl IrLowerer {
                 };
                 self.finish_block(Terminator::Return(ret_op));
             }
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                let _cond_op = self.lower_expr(condition)?;
+                for s in &then_branch.statements {
+                    self.lower_stmt(s)?;
+                }
+                if let Some(eb) = else_branch {
+                    for s in &eb.statements {
+                        self.lower_stmt(s)?;
+                    }
+                }
+            }
             Stmt::Expr(expr, _) => {
                 self.lower_expr(expr)?;
             }

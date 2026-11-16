@@ -526,6 +526,34 @@ impl Parser {
                 value,
                 span: start.merge(end),
             })
+        } else if self.match_token(&TokenKind::If) {
+            let start = self.previous_span();
+            let condition = self.parse_expr()?;
+            let then_branch = self.parse_block()?;
+            let else_branch = if self.match_token(&TokenKind::Else) {
+                if self.check(&TokenKind::If) {
+                    let elif_stmt = self.parse_statement()?;
+                    let span = elif_stmt.span();
+                    Some(Block {
+                        statements: vec![elif_stmt],
+                        span,
+                    })
+                } else {
+                    Some(self.parse_block()?)
+                }
+            } else {
+                None
+            };
+            let end = else_branch
+                .as_ref()
+                .map(|b| b.span)
+                .unwrap_or(then_branch.span);
+            Ok(Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+                span: start.merge(end),
+            })
         } else {
             let expr = self.parse_expr()?;
             if self.match_token(&TokenKind::Eq) {

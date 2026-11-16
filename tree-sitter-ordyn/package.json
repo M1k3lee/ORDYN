@@ -1,0 +1,22 @@
+{
+  "name": "tree-sitter-ordyn",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for the ORDYN programming language",
+  "main": "bindings/node",
+  "keywords": [
+    "parser",
+    "lexer",
+    "tree-sitter",
+    "ordyn",
+    "security"
+  ],
+  "author": "The ORDYN Authors",
+  "license": "Apache-2.0 OR MIT",
+  "tree-sitter": [
+    {
+      "scope": "source.ordyn",
+      "file-types": ["ordyn"],
+      "injection-regex": "ordyn"
+    }
+  ]
+}

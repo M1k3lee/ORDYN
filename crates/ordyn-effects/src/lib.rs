@@ -281,6 +281,18 @@ impl EffectAnalyzer {
                     self.analyze_expr(expr, function_name, declared_effects, entity_name)?;
                 }
             }
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
+                self.analyze_expr(condition, function_name, declared_effects, entity_name)?;
+                self.analyze_block(then_branch, function_name, declared_effects, entity_name)?;
+                if let Some(eb) = else_branch {
+                    self.analyze_block(eb, function_name, declared_effects, entity_name)?;
+                }
+            }
             Stmt::Expr(expr, _) => {
                 self.analyze_expr(expr, function_name, declared_effects, entity_name)?;
             }

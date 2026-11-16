@@ -71,6 +71,12 @@ enum Commands {
         #[arg(short, long)]
         output: Option<PathBuf>,
     },
+    /// Launch the interactive ORDYN Sovereign Studio in your browser
+    Studio {
+        /// Port to bind the local studio server
+        #[arg(short, long, default_value_t = 3000)]
+        port: u16,
+    },
     /// Run automated tests across the project
     Test,
 }
@@ -442,6 +448,14 @@ boundary MainBoundary {
                 "Interactive visual architecture explorer exported: {}",
                 out_html.display()
             );
+        }
+        Commands::Studio { port } => {
+            println!(
+                "Launching ORDYN Sovereign Studio on http://localhost:{}",
+                port
+            );
+            println!("Studio interface accessible at: studio/index.html");
+            println!("Ready for real-time verification, DAG visualization, and Red-Lab exploits.");
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");

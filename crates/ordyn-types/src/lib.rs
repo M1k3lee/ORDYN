@@ -573,6 +573,34 @@ impl TypeChecker {
                     });
                 }
             }
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+                span: _,
+            } => {
+                let cond_ty = self.check_expr(condition)?;
+                if cond_ty != Type::Bool {
+                    return Err(TypeError::TypeMismatch {
+                        expected: "Bool".to_string(),
+                        found: cond_ty.to_string(),
+                        span: condition.span(),
+                    });
+                }
+                self.enter_scope();
+                for s in &then_branch.statements {
+                    self.check_stmt(s)?;
+                }
+                self.exit_scope();
+
+                if let Some(eb) = else_branch {
+                    self.enter_scope();
+                    for s in &eb.statements {
+                        self.check_stmt(s)?;
+                    }
+                    self.exit_scope();
+                }
+            }
             Stmt::Expr(expr, _) => {
                 self.check_expr(expr)?;
             }

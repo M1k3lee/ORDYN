@@ -1,0 +1,99 @@
+// ORDYN Orbit Cloud Microservice Example: Zero-Trust Multi-Tenant Payment Service
+// Showcases capability-confined boundaries, formal contracts, and transactional storage.
+
+capability NetworkGateway {
+    bind_address: String;
+    port: Int;
+}
+
+capability LedgerStorage {
+    namespace: String;
+}
+
+capability VaultCrypto {
+    key_id: String;
+}
+
+capability AuditEmitter {
+    compliance_standard: String;
+}
+
+interface WalletManager {
+    fn transfer(from_wallet: String, to_wallet: String, amount: Int) -> Result<Int, String>
+        with [LedgerStorage, AuditEmitter];
+}
+
+interface FraudDetector {
+    fn evaluate_risk_score(account_id: String, amount: Int) -> Int
+        with [VaultCrypto];
+}
+
+entity Wallet {
+    let wallet_id: String;
+    mut balance: Int;
+    mut status: String;
+
+    pub fn credit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.balance == old(self.balance) + amount
+    {
+        self.balance = self.balance + amount;
+        return Ok(self.balance);
+    }
+
+    pub fn debit(amount: Int) -> Result<Int, String>
+        requires amount > 0 && amount <= self.balance
+        ensures self.balance == old(self.balance) - amount
+    {
+        self.balance = self.balance - amount;
+        return Ok(self.balance);
+    }
+}
+
+entity FraudEngine {
+    let engine_id: String;
+
+    pub fn evaluate_risk_score(account_id: String, amount: Int) -> Int
+        requires amount > 0
+    {
+        // Deterministic risk analysis
+        if amount > 10000 {
+            return 85;
+        } else {
+            return 10;
+        }
+    }
+}
+
+boundary ApiGatewayBoundary {
+    grant NetworkGateway { bind_address: "0.0.0.0", port: 8443 };
+    grant AuditEmitter { compliance_standard: "SOC2_TYPE_II" };
+
+    quota {
+        memory_limit: 64;
+        fuel_limit: 250000;
+    }
+}
+
+boundary SettlementCoreBoundary {
+    grant LedgerStorage { namespace: "prod/settlement/v1" };
+    grant AuditEmitter { compliance_standard: "PCI_DSS_V4" };
+
+    quota {
+        memory_limit: 256;
+        fuel_limit: 2000000;
+    }
+
+    bind Wallet;
+}
+
+boundary RiskEvaluationBoundary {
+    grant VaultCrypto { key_id: "sec/hsm/risk-scoring-key" };
+
+    quota {
+        memory_limit: 128;
+        fuel_limit: 500000;
+    }
+
+    bind FraudEngine;
+}

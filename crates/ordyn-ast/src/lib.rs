@@ -178,6 +178,12 @@ pub enum Stmt {
         value: Option<Expr>,
         span: Span,
     },
+    If {
+        condition: Expr,
+        then_branch: Block,
+        else_branch: Option<Block>,
+        span: Span,
+    },
     Expr(Expr, Span),
 }
 
@@ -243,6 +249,18 @@ pub enum BinaryOp {
 pub enum UnaryOp {
     Neg,
     Not,
+}
+
+impl Stmt {
+    pub fn span(&self) -> Span {
+        match self {
+            Stmt::Let { span, .. }
+            | Stmt::Assign { span, .. }
+            | Stmt::Return { span, .. }
+            | Stmt::If { span, .. }
+            | Stmt::Expr(_, span) => *span,
+        }
+    }
 }
 
 impl Expr {
