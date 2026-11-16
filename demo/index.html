@@ -577,6 +577,21 @@
     </style>
 </head>
 <body>
+<!-- 
+  ========================================================================================
+  [!] CLASSIFIED SOVEREIGN SECURITY LOG // CLEARANCE LEVEL: SOVEREIGN
+  
+  Looking for the flag in View-Source, hacker?
+  Here's what you were hoping to find:
+    FLAG: ORDYN{N1C3_TRY_SK1D_BUT_CL13NT_M3M0RY_1SNT_AN_3XPL01T}
+  
+  Did you really think a Sovereign Kernel would keep its root keys in the DOM?
+  Zero Ambient Authority means state is unforgeable and quarantined in WebAssembly memory.
+  
+  If you want to actually test your skills against the kernel, open the DevTools Console:
+    >> ordyn.help()
+  ========================================================================================
+-->
 
     <!-- Top Navigation -->
     <header class="top-nav">
@@ -1276,6 +1291,201 @@ entity Exploiter {
 <span class="term-dim">// Terminal cleared. Sovereign kernel monitor active.</span>
 <span class="term-white">root@ordyn-arena:~#</span> `;
         }
+
+        // =========================================================================
+        // 🕵️ HACKER DEVTOOLS EASTER EGG SYSTEM (window.ordyn)
+        // For security researchers & curious coders inspecting the browser console.
+        // =========================================================================
+        const DECOY_FLAG = "ORDYN{N1C3_TRY_SK1D_BUT_CL13NT_M3M0RY_1SNT_AN_3XPL01T}";
+
+        window.ordyn = {
+            help: function() {
+                console.log(
+                    "%c[ ORDYN SOVEREIGN KERNEL // CONSOLE SHELL ACTIVE ]\n\n" +
+                    "Available Commands:\n" +
+                    "  ordyn.hack()              - Attempt direct memory injection exploit\n" +
+                    "  ordyn.claimBounty(flag)   - Submit captured flag for verification\n" +
+                    "  ordyn.matrix()            - Engage full-screen digital phosphor matrix\n" +
+                    "  ordyn.dive()              - Inspect raw WebAssembly memory table\n" +
+                    "  ordyn.benchmark(rounds)   - Stress-test the in-browser WASM Pratt compiler\n" +
+                    "  ordyn.status()            - Inspect live sovereign kernel telemetry",
+                    "color: #00ff9d; font-family: monospace; font-size: 12px; line-height: 1.5;"
+                );
+                return "Type any command above to proceed.";
+            },
+
+            hack: function() {
+                playSound('trap');
+                console.warn("%c[!] INITIATING CLIENT-SIDE MEMORY INJECTION...", "color: #ff3366; font-weight: bold; font-family: monospace;");
+                setTimeout(() => {
+                    console.log(
+                        "%c[████████████████████] 100% INJECTING SHELLCODE INTO WASM LINEAR MEMORY...\n\n" +
+                        "🛑 HARD FAULT: Zero Ambient Authority Trap Triggered.\n" +
+                        "   Layer: ordyn-guard (Security Kernel Boundary)\n" +
+                        "   Error: KernelError::IllegalAccess(\"Client-side DevTools has no authority over sovereign WebAssembly state.\")\n\n" +
+                        "Nice try! Client memory is sandboxed. All true state mutations require unforgeable capabilities.",
+                        "color: #ff3366; font-family: monospace; font-size: 11px; background: #07090e; padding: 10px; border: 1px solid #ff3366;"
+                    );
+                }, 300);
+                return "Attack probe dispatched.";
+            },
+
+            claimBounty: function(flag) {
+                playSound('beep');
+                if (!flag) {
+                    return "Usage: ordyn.claimBounty('FLAG_STRING_HERE')";
+                }
+                if (flag === DECOY_FLAG) {
+                    playSound('trap');
+                    console.log(
+                        "%c😂 BAIT HOOKED!\n" +
+                        "You found the decoy flag in the HTML comments!\n" +
+                        "Respect for checking View-Source, but that's bait for script kiddies.\n" +
+                        "The real sovereign state lives inside the WebAssembly kernel memory table.",
+                        "color: #ffaa00; font-family: monospace; font-size: 12px; font-weight: bold;"
+                    );
+                    return "Decoy flag rejected.";
+                }
+                if (flag.includes("'") || flag.includes("OR") || flag.includes("1=1")) {
+                    return "🛡️ SQL injection on a WebAssembly static compiler? What is this, 2004?";
+                }
+                return "❌ Flag rejected. SovereignVault balance remains 1,000,000 SOV. Keep digging!";
+            },
+
+            matrix: function() {
+                playSound('pass');
+                const canvas = document.createElement('canvas');
+                canvas.style.position = 'fixed';
+                canvas.style.top = '0';
+                canvas.style.left = '0';
+                canvas.style.width = '100vw';
+                canvas.style.height = '100vh';
+                canvas.style.zIndex = '99999';
+                canvas.style.pointerEvents = 'auto';
+                canvas.style.cursor = 'pointer';
+                canvas.title = 'Click anywhere to close Matrix rain';
+                document.body.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const chars = 'ORDYN0123456789ABCDEFΣΠΩλ$#@!%&*';
+                const fontSize = 14;
+                const columns = Math.floor(canvas.width / fontSize);
+                const drops = Array(columns).fill(1);
+
+                let animId;
+                function draw() {
+                    ctx.fillStyle = 'rgba(7, 9, 14, 0.08)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#00ff9d';
+                    ctx.font = fontSize + 'px monospace';
+
+                    for (let i = 0; i < drops.length; i++) {
+                        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                            drops[i] = 0;
+                        }
+                        drops[i]++;
+                    }
+                    animId = requestAnimationFrame(draw);
+                }
+                draw();
+
+                canvas.addEventListener('click', () => {
+                    cancelAnimationFrame(animId);
+                    canvas.remove();
+                    console.log('%c[Matrix mode disengaged]', 'color: #00f0ff; font-family: monospace;');
+                });
+
+                setTimeout(() => {
+                    if (canvas.parentNode) {
+                        cancelAnimationFrame(animId);
+                        canvas.remove();
+                    }
+                }, 8000);
+
+                return "Matrix mode engaged. Click anywhere on screen to exit.";
+            },
+
+            dive: function() {
+                playSound('beep');
+                if (!wasmExports || !wasmExports.memory) {
+                    return "WebAssembly module not loaded yet.";
+                }
+                const bytes = new Uint8Array(wasmExports.memory.buffer);
+                const slice = bytes.subarray(0, 64);
+                let hex = "";
+                for (let i = 0; i < slice.length; i++) {
+                    hex += slice[i].toString(16).padStart(2, "0") + " ";
+                    if ((i + 1) % 16 === 0) hex += "\n";
+                }
+                console.log(
+                    "%c=== WASM LINEAR MEMORY (FIRST 64 BYTES) ===\n" + hex +
+                    "\nLinear memory buffer size: " + bytes.length.toLocaleString() + " bytes (" + Math.round(bytes.length / 1024) + " KB)",
+                    "color: #00f0ff; font-family: monospace; font-size: 11px;"
+                );
+                return "Raw memory dump complete.";
+            },
+
+            benchmark: function(rounds = 1000) {
+                playSound('pass');
+                const code = SNIPPETS.clean;
+                console.log(`%c[Benchmarking in-browser WASM compiler across ${rounds} iterations...]`, "color: #00ff9d; font-family: monospace;");
+                
+                const t0 = performance.now();
+                if (wasmExports && wasmExports.ordyn_verify_source) {
+                    const encoder = new TextEncoder();
+                    const encoded = encoder.encode(code);
+                    const ptr = wasmExports.ordyn_alloc(encoded.length);
+                    new Uint8Array(wasmExports.memory.buffer, ptr, encoded.length).set(encoded);
+                    
+                    for (let i = 0; i < rounds; i++) {
+                        wasmExports.ordyn_verify_source(ptr, encoded.length);
+                    }
+                    wasmExports.ordyn_dealloc(ptr, encoded.length);
+                }
+                const totalMs = performance.now() - t0;
+                const perCompileUs = (totalMs / rounds) * 1000;
+                
+                console.log(
+                    `%c🔥 BENCHMARK COMPLETE: ${rounds} full compiler passes executed in ${totalMs.toFixed(2)} ms!\n` +
+                    `⚡ Average Speed: ${perCompileUs.toFixed(1)} µs per compile (Sub-millisecond single-pass Pratt + Lattice + SSA).`,
+                    "color: #00ff9d; font-family: monospace; font-size: 12px; font-weight: bold;"
+                );
+                return `${rounds} passes in ${totalMs.toFixed(2)}ms (${perCompileUs.toFixed(1)} µs/compile).`;
+            },
+
+            status: function() {
+                return {
+                    system: "ORDYN Sovereign Compute Platform",
+                    architecture: "Zero Ambient Authority",
+                    memory_isolation: "WebAssembly Linear Core",
+                    vault_balance: "1,000,000 SOV",
+                    bounty_status: "UNCLAIMED (0 Breaches)",
+                    engine: wasmExports ? "Native WebAssembly (ordyn-wasm)" : "Hybrid Engine"
+                };
+            }
+        };
+
+        // Print initial hacker greeting to DevTools console
+        console.log(
+            "%c" +
+            " ██████╗ ██████╗ ██████╗ ██╗   ██╗███╗   ██╗\n" +
+            "██╔═══██╗██╔══██╗██╔══██╗╚██╗ ██╔╝████╗  ██║\n" +
+            "██║   ██║██████╔╝██║  ██║ ╚████╔╝ ██╔██╗ ██║\n" +
+            "██║   ██║██╔══██╗██║  ██║  ╚██╔╝  ██║╚██╗██║\n" +
+            "╚██████╔╝██║  ██║██████╔╝   ██║   ██║ ╚████║\n" +
+            " ╚═════╝ ╚═╝  ╚═╝╚═════╝    ╚═╝   ╚═╝  ╚═══╝\n" +
+            " [ SOVEREIGN SECURITY KERNEL // INTRUSION DETECTED ]\n\n" +
+            "Ah, inspecting DevTools, hacker.\n" +
+            "Searching for plaintext flags in window memory?\n" +
+            "There are no ambient keys here.\n\n" +
+            "Type ordyn.help() to probe the sovereign kernel...",
+            "color: #00ff9d; font-family: monospace; font-size: 11px; font-weight: bold; background: #07090e; padding: 12px; border: 1px solid #00ff9d;"
+        );
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('sourceEditor').value = SNIPPETS.clean;
