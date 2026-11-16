@@ -1294,27 +1294,29 @@ entity Exploiter {
 
         // =========================================================================
         // 🕵️ HACKER DEVTOOLS EASTER EGG SYSTEM (window.ordyn)
-        // For security researchers & curious coders inspecting the browser console.
+        // Supports both property access (ordyn.help) and call invocation (ordyn.help())
+        // Plus automatic typo correction for "orydn"
         // =========================================================================
         const DECOY_FLAG = "ORDYN{N1C3_TRY_SK1D_BUT_CL13NT_M3M0RY_1SNT_AN_3XPL01T}";
 
-        window.ordyn = {
-            help: function() {
+        const ordynImpl = {
+            showHelp: function() {
                 console.log(
                     "%c[ ORDYN SOVEREIGN KERNEL // CONSOLE SHELL ACTIVE ]\n\n" +
                     "Available Commands:\n" +
-                    "  ordyn.hack()              - Attempt direct memory injection exploit\n" +
-                    "  ordyn.claimBounty(flag)   - Submit captured flag for verification\n" +
-                    "  ordyn.matrix()            - Engage full-screen digital phosphor matrix\n" +
-                    "  ordyn.dive()              - Inspect raw WebAssembly memory table\n" +
-                    "  ordyn.benchmark(rounds)   - Stress-test the in-browser WASM Pratt compiler\n" +
-                    "  ordyn.status()            - Inspect live sovereign kernel telemetry",
+                    "  ordyn.help              - Print this command directory\n" +
+                    "  ordyn.hack              - Attempt direct memory injection exploit\n" +
+                    "  ordyn.matrix            - Engage full-screen digital phosphor matrix\n" +
+                    "  ordyn.dive              - Inspect raw WebAssembly memory table\n" +
+                    "  ordyn.benchmark(rounds) - Stress-test the in-browser WASM Pratt compiler\n" +
+                    "  ordyn.claimBounty(flag) - Submit captured flag for verification\n" +
+                    "  ordyn.status            - Inspect live sovereign kernel telemetry",
                     "color: #00ff9d; font-family: monospace; font-size: 12px; line-height: 1.5;"
                 );
-                return "Type any command above to proceed.";
+                return "Ready. Type any command above to proceed.";
             },
 
-            hack: function() {
+            doHack: function() {
                 playSound('trap');
                 console.warn("%c[!] INITIATING CLIENT-SIDE MEMORY INJECTION...", "color: #ff3366; font-weight: bold; font-family: monospace;");
                 setTimeout(() => {
@@ -1330,29 +1332,7 @@ entity Exploiter {
                 return "Attack probe dispatched.";
             },
 
-            claimBounty: function(flag) {
-                playSound('beep');
-                if (!flag) {
-                    return "Usage: ordyn.claimBounty('FLAG_STRING_HERE')";
-                }
-                if (flag === DECOY_FLAG) {
-                    playSound('trap');
-                    console.log(
-                        "%c😂 BAIT HOOKED!\n" +
-                        "You found the decoy flag in the HTML comments!\n" +
-                        "Respect for checking View-Source, but that's bait for script kiddies.\n" +
-                        "The real sovereign state lives inside the WebAssembly kernel memory table.",
-                        "color: #ffaa00; font-family: monospace; font-size: 12px; font-weight: bold;"
-                    );
-                    return "Decoy flag rejected.";
-                }
-                if (flag.includes("'") || flag.includes("OR") || flag.includes("1=1")) {
-                    return "🛡️ SQL injection on a WebAssembly static compiler? What is this, 2004?";
-                }
-                return "❌ Flag rejected. SovereignVault balance remains 1,000,000 SOV. Keep digging!";
-            },
-
-            matrix: function() {
+            doMatrix: function() {
                 playSound('pass');
                 const canvas = document.createElement('canvas');
                 canvas.style.position = 'fixed';
@@ -1410,7 +1390,7 @@ entity Exploiter {
                 return "Matrix mode engaged. Click anywhere on screen to exit.";
             },
 
-            dive: function() {
+            doDive: function() {
                 playSound('beep');
                 if (!wasmExports || !wasmExports.memory) {
                     return "WebAssembly module not loaded yet.";
@@ -1430,7 +1410,7 @@ entity Exploiter {
                 return "Raw memory dump complete.";
             },
 
-            benchmark: function(rounds = 1000) {
+            doBenchmark: function(rounds = 1000) {
                 playSound('pass');
                 const code = SNIPPETS.clean;
                 console.log(`%c[Benchmarking in-browser WASM compiler across ${rounds} iterations...]`, "color: #00ff9d; font-family: monospace;");
@@ -1458,7 +1438,29 @@ entity Exploiter {
                 return `${rounds} passes in ${totalMs.toFixed(2)}ms (${perCompileUs.toFixed(1)} µs/compile).`;
             },
 
-            status: function() {
+            claimBounty: function(flag) {
+                playSound('beep');
+                if (!flag) {
+                    return "Usage: ordyn.claimBounty('FLAG_STRING_HERE')";
+                }
+                if (flag === DECOY_FLAG) {
+                    playSound('trap');
+                    console.log(
+                        "%c😂 BAIT HOOKED!\n" +
+                        "You found the decoy flag in the HTML comments!\n" +
+                        "Respect for checking View-Source, but that's bait for script kiddies.\n" +
+                        "The real sovereign state lives inside the WebAssembly kernel memory table.",
+                        "color: #ffaa00; font-family: monospace; font-size: 12px; font-weight: bold;"
+                    );
+                    return "Decoy flag rejected.";
+                }
+                if (flag.includes("'") || flag.includes("OR") || flag.includes("1=1")) {
+                    return "🛡️ SQL injection on a WebAssembly static compiler? What is this, 2004?";
+                }
+                return "❌ Flag rejected. SovereignVault balance remains 1,000,000 SOV. Keep digging!";
+            },
+
+            getStatus: function() {
                 return {
                     system: "ORDYN Sovereign Compute Platform",
                     architecture: "Zero Ambient Authority",
@@ -1469,6 +1471,71 @@ entity Exploiter {
                 };
             }
         };
+
+        // Create the dual getter/callable interface
+        const ordynShell = {
+            claimBounty: ordynImpl.claimBounty,
+            benchmark: ordynImpl.doBenchmark
+        };
+
+        // Define dual properties so `ordyn.help` AND `ordyn.help()` both work
+        Object.defineProperty(ordynShell, 'help', {
+            get: function() {
+                ordynImpl.showHelp();
+                const fn = function() { return ordynImpl.showHelp(); };
+                fn.toString = () => "[ORDYN Shell Active]";
+                return fn;
+            }
+        });
+
+        Object.defineProperty(ordynShell, 'hack', {
+            get: function() {
+                ordynImpl.doHack();
+                const fn = function() { return ordynImpl.doHack(); };
+                fn.toString = () => "[Injecting Shellcode...]";
+                return fn;
+            }
+        });
+
+        Object.defineProperty(ordynShell, 'matrix', {
+            get: function() {
+                ordynImpl.doMatrix();
+                const fn = function() { return ordynImpl.doMatrix(); };
+                fn.toString = () => "[Matrix Engaged]";
+                return fn;
+            }
+        });
+
+        Object.defineProperty(ordynShell, 'dive', {
+            get: function() {
+                ordynImpl.doDive();
+                const fn = function() { return ordynImpl.doDive(); };
+                fn.toString = () => "[Memory Dumped]";
+                return fn;
+            }
+        });
+
+        Object.defineProperty(ordynShell, 'status', {
+            get: function() {
+                const s = ordynImpl.getStatus();
+                console.table(s);
+                const fn = function() { return s; };
+                fn.toString = () => JSON.stringify(s);
+                return fn;
+            }
+        });
+
+        // Register global objects and aliases (including typo forgiveness!)
+        window.ordyn = ordynShell;
+        window.orydn = ordynShell; // Forgiving the "orydn" typo!
+        window.ordn = ordynShell;
+        window.ordyne = ordynShell;
+
+        // Also define global shortcuts on window
+        try {
+            Object.defineProperty(window, 'hack', { get: () => ordynShell.hack });
+            Object.defineProperty(window, 'matrix', { get: () => ordynShell.matrix });
+        } catch (_) {}
 
         // Print initial hacker greeting to DevTools console
         console.log(
@@ -1483,7 +1550,7 @@ entity Exploiter {
             "Ah, inspecting DevTools, hacker.\n" +
             "Searching for plaintext flags in window memory?\n" +
             "There are no ambient keys here.\n\n" +
-            "Type ordyn.help() to probe the sovereign kernel...",
+            "Type ordyn.help (or just help) to probe the sovereign kernel...",
             "color: #00ff9d; font-family: monospace; font-size: 11px; font-weight: bold; background: #07090e; padding: 12px; border: 1px solid #00ff9d;"
         );
 
