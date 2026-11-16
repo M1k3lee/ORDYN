@@ -21,6 +21,7 @@ ordyn-guard = { path = "../ordyn-guard" }
 ordyn-runtime = { path = "../ordyn-runtime" }
 ordyn-forge = { path = "../ordyn-forge" }
 ordyn-visual = { path = "../ordyn-visual" }
+ordyn-prover = { path = "../ordyn-prover" }
 clap.workspace = true
 miette.workspace = true
 thiserror.workspace = true

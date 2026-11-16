@@ -1,0 +1,14 @@
+[package]
+name = "ordyn-prover"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+ordyn-diagnostics = { path = "../ordyn-diagnostics" }
+ordyn-ast = { path = "../ordyn-ast" }
+
+[dev-dependencies]
+ordyn-parser = { path = "../ordyn-parser" }
+ordyn-types = { path = "../ordyn-types" }

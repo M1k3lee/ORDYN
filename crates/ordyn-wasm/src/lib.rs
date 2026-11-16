@@ -1,3 +1,4 @@
+#![allow(clippy::missing_safety_doc)]
 extern crate alloc;
 use alloc::format;
 use alloc::string::String;
@@ -62,15 +63,16 @@ pub unsafe extern "C" fn ordyn_dealloc(ptr: *mut u8, size: usize) {
 }
 
 // Global response buffer to return C-strings to JS
-static mut LAST_RESPONSE: Vec<u8> = Vec::new();
+static mut LAST_RESPONSE: Option<Vec<u8>> = None;
 
 fn set_response_json<T: Serialize>(val: &T) -> *const u8 {
-    let json_bytes = serde_json::to_vec(val).unwrap_or_else(|_| b"{}".to_vec());
+    let mut json_bytes = serde_json::to_vec(val).unwrap_or_else(|_| b"{}".to_vec());
+    json_bytes.push(0); // Null terminator
+    let ptr = json_bytes.as_ptr();
     unsafe {
-        LAST_RESPONSE = json_bytes;
-        LAST_RESPONSE.push(0); // Null terminator
-        LAST_RESPONSE.as_ptr()
+        LAST_RESPONSE = Some(json_bytes);
     }
+    ptr
 }
 
 #[no_mangle]

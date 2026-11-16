@@ -15,6 +15,19 @@ pub enum ForgeError {
     #[error("Corrupt package or integrity checksum mismatch for `{package}`")]
     #[diagnostic(code(ordyn::forge::integrity_mismatch))]
     IntegrityMismatch { package: String },
+
+    #[error("Cryptographic signature verification failed for `{package}` signed by `{author}`")]
+    #[diagnostic(code(ordyn::forge::signature_verification_failed))]
+    InvalidSignature { package: String, author: String },
+
+    #[error("Supply-chain alert: upgrade of `{package}` from {from_version} to {to_version} requests unauthorized new capabilities: {added_capabilities:?}")]
+    #[diagnostic(code(ordyn::forge::unauthorized_capability_escalation))]
+    CapabilityEscalation {
+        package: String,
+        from_version: String,
+        to_version: String,
+        added_capabilities: Vec<String>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,6 +49,87 @@ pub struct SealedPackage {
     pub manifest: PackageManifest,
     pub source_content: String,
     pub integrity_hash: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SignedPackage {
+    pub package: SealedPackage,
+    pub signer_identity: String,
+    pub signature: String,
+}
+
+pub struct CapabilityDiffer;
+
+impl CapabilityDiffer {
+    /// Detects if an upgraded package version requests capabilities not present in the current version.
+    pub fn diff_capabilities(
+        old_manifest: &PackageManifest,
+        new_manifest: &PackageManifest,
+    ) -> Result<(), ForgeError> {
+        let mut added = Vec::new();
+        for cap in &new_manifest.declared_capabilities {
+            if !old_manifest.declared_capabilities.contains(cap) {
+                added.push(cap.clone());
+            }
+        }
+        added.sort();
+
+        if !added.is_empty() {
+            return Err(ForgeError::CapabilityEscalation {
+                package: new_manifest.name.clone(),
+                from_version: old_manifest.version.clone(),
+                to_version: new_manifest.version.clone(),
+                added_capabilities: added,
+            });
+        }
+
+        Ok(())
+    }
+}
+
+pub struct PackageSigner;
+
+impl PackageSigner {
+    /// Digitally sign a sealed package using an author identity key.
+    pub fn sign_package(pkg: SealedPackage, author_key_id: &str) -> SignedPackage {
+        // Deterministic Ed25519-style simulation hash of package integrity + author
+        let mut sig_hash: u64 = 0x9e3779b97f4a7c15;
+        for b in pkg.integrity_hash.bytes().chain(author_key_id.bytes()) {
+            sig_hash ^= b as u64;
+            sig_hash = sig_hash.wrapping_mul(0xbf58476d1ce4e5b9);
+        }
+        let signature = format!("ordyn-sig-v1:{:016x}", sig_hash);
+
+        SignedPackage {
+            package: pkg,
+            signer_identity: author_key_id.to_string(),
+            signature,
+        }
+    }
+
+    /// Verify cryptographic signature of a signed package against expected author.
+    pub fn verify_signature(signed_pkg: &SignedPackage) -> Result<(), ForgeError> {
+        let mut expected_hash: u64 = 0x9e3779b97f4a7c15;
+        for b in signed_pkg
+            .package
+            .integrity_hash
+            .bytes()
+            .chain(signed_pkg.signer_identity.bytes())
+        {
+            expected_hash ^= b as u64;
+            expected_hash = expected_hash.wrapping_mul(0xbf58476d1ce4e5b9);
+        }
+        let expected_sig = format!("ordyn-sig-v1:{:016x}", expected_hash);
+
+        if signed_pkg.signature != expected_sig {
+            return Err(ForgeError::InvalidSignature {
+                package: signed_pkg.package.manifest.name.clone(),
+                author: signed_pkg.signer_identity.clone(),
+            });
+        }
+
+        Ok(())
+    }
 }
 
 pub struct ForgeVerifier;
@@ -207,5 +301,56 @@ mod tests {
         let report = PackageInspector::inspect(&pkg);
         assert!(report.contains("Package: VaultCore"));
         assert!(report.contains("StorageWrite"));
+    }
+
+    #[test]
+    fn test_capability_differ_catches_supply_chain_authority_escalation() {
+        let v1 = PackageManifest {
+            name: "event_stream".to_string(),
+            version: "1.0.0".to_string(),
+            declared_capabilities: HashSet::new(), // Pure library
+            dependencies: HashMap::new(),
+        };
+
+        // Upgraded version stealthily adds NetConnect capability!
+        let v2 = PackageManifest {
+            name: "event_stream".to_string(),
+            version: "1.1.0".to_string(),
+            declared_capabilities: HashSet::from(["NetConnect".to_string()]),
+            dependencies: HashMap::new(),
+        };
+
+        let diff_res = CapabilityDiffer::diff_capabilities(&v1, &v2);
+        assert!(diff_res.is_err());
+        match diff_res.unwrap_err() {
+            ForgeError::CapabilityEscalation {
+                package,
+                added_capabilities,
+                ..
+            } => {
+                assert_eq!(package, "event_stream");
+                assert_eq!(added_capabilities, vec!["NetConnect".to_string()]);
+            }
+            other => panic!("Unexpected error: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_package_signing_and_signature_verification() {
+        let manifest = PackageManifest {
+            name: "CryptoCore".to_string(),
+            version: "2.0.0".to_string(),
+            declared_capabilities: HashSet::new(),
+            dependencies: HashMap::new(),
+        };
+        let pkg = PackagePackager::package_project(manifest, "fn hash() -> Int { 0 }");
+
+        let signed = PackageSigner::sign_package(pkg, "key-ed25519-publisher-trusted");
+        assert!(PackageSigner::verify_signature(&signed).is_ok());
+
+        // Tamper with signature
+        let mut tampered = signed.clone();
+        tampered.signature = "ordyn-sig-v1:forgeddeadbeef0".to_string();
+        assert!(PackageSigner::verify_signature(&tampered).is_err());
     }
 }

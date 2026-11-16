@@ -16,6 +16,9 @@ members = [
     "crates/ordyn-visual",
     "crates/ordyn-cli",
     "crates/ordyn-wasm",
+    "crates/ordyn-prover",
+    "crates/ordyn-ffi",
+    "crates/ordyn-orbit",
 ]
 resolver = "2"
 

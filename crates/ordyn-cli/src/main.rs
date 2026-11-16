@@ -185,6 +185,82 @@ boundary MainBoundary {
                 kernel.audit_records().len()
             );
 
+            println!("Executing formal contract verification via SMT-LIB2 / LIA solver...");
+            let mut proven_count = 0;
+            let mut dynamic_count = 0;
+
+            for decl in &program.declarations {
+                let (owner_name, method_list) = match decl {
+                    ordyn_ast::Declaration::Entity(entity) => {
+                        let methods: Vec<&ordyn_ast::FunctionDecl> = entity
+                            .members
+                            .iter()
+                            .filter_map(|m| {
+                                if let ordyn_ast::EntityMember::Method(f) = m {
+                                    Some(f)
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        (entity.name.name.clone(), methods)
+                    }
+                    ordyn_ast::Declaration::Function(func) => ("global".to_string(), vec![func]),
+                    _ => continue,
+                };
+
+                for method in method_list {
+                    let mut pre_exprs = Vec::new();
+                    let mut post_exprs = Vec::new();
+
+                    for c in &method.contracts {
+                        match c {
+                            ordyn_ast::ContractClause::Requires(expr, _) => {
+                                pre_exprs.push(expr.clone())
+                            }
+                            ordyn_ast::ContractClause::Ensures(expr, _) => {
+                                post_exprs.push(expr.clone())
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    for post in &post_exprs {
+                        let result =
+                            ordyn_prover::ContractProver::verify_contract(&pre_exprs, post);
+                        match result {
+                            ordyn_prover::VerificationResult::Proven { proof_engine, .. } => {
+                                println!(
+                                    "  [PROVEN] {}::{} ensures clause -> {}",
+                                    owner_name, method.name.name, proof_engine
+                                );
+                                proven_count += 1;
+                            }
+                            ordyn_prover::VerificationResult::Falsified {
+                                counterexample,
+                                explanation,
+                            } => {
+                                eprintln!(
+                                    "  [FALSIFIED] {}::{} ensures clause -> {}",
+                                    owner_name, method.name.name, explanation
+                                );
+                                eprintln!("    Counterexample: {:?}", counterexample);
+                                return Err(miette::miette!("Contract falsified by SMT solver"));
+                            }
+                            ordyn_prover::VerificationResult::Indeterminate { .. } => {
+                                println!("  [RUNTIME_ENFORCED] {}::{} ensures clause -> dynamic trap preserved", owner_name, method.name.name);
+                                dynamic_count += 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            println!(
+                "Formal Verification complete: {} contracts proven statically, {} contracts preserved as non-strippable runtime traps.",
+                proven_count, dynamic_count
+            );
+
             println!("Static verification baseline passed for {} declarations (contracts, effects & boundaries sound).", program.declarations.len());
         }
         Commands::Build { file, output } => {
