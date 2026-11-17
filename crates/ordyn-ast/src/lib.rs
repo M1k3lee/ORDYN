@@ -16,6 +16,22 @@ pub enum Declaration {
     Boundary(BoundaryDecl),
     Interface(InterfaceDecl),
     Function(FunctionDecl),
+    Enum(EnumDecl),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EnumDecl {
+    pub is_pub: bool,
+    pub name: Ident,
+    pub variants: Vec<EnumVariant>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EnumVariant {
+    pub name: Ident,
+    pub payload: Option<TypeRef>,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -184,6 +200,13 @@ pub enum Stmt {
         else_branch: Option<Block>,
         span: Span,
     },
+    While {
+        condition: Expr,
+        body: Block,
+        span: Span,
+    },
+    Break(Span),
+    Continue(Span),
     Expr(Expr, Span),
 }
 
@@ -212,11 +235,36 @@ pub enum Expr {
         field: Ident,
         span: Span,
     },
+    Match {
+        target: Box<Expr>,
+        arms: Vec<MatchArm>,
+        span: Span,
+    },
     Old {
         expr: Box<Expr>,
         span: Span,
     },
     Block(Block),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MatchArm {
+    pub pattern: Pattern,
+    pub body: Expr,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Pattern {
+    Wildcard(Span),
+    Literal(Literal, Span),
+    Ident(Ident),
+    Variant {
+        enum_name: Option<Ident>,
+        variant_name: Ident,
+        payload_pattern: Option<Box<Pattern>>,
+        span: Span,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -258,6 +306,9 @@ impl Stmt {
             | Stmt::Assign { span, .. }
             | Stmt::Return { span, .. }
             | Stmt::If { span, .. }
+            | Stmt::While { span, .. }
+            | Stmt::Break(span)
+            | Stmt::Continue(span)
             | Stmt::Expr(_, span) => *span,
         }
     }
@@ -272,8 +323,18 @@ impl Expr {
             Expr::Unary { span, .. } => *span,
             Expr::Call { span, .. } => *span,
             Expr::FieldAccess { span, .. } => *span,
+            Expr::Match { span, .. } => *span,
             Expr::Old { span, .. } => *span,
             Expr::Block(b) => b.span,
+        }
+    }
+}
+
+impl Pattern {
+    pub fn span(&self) -> Span {
+        match self {
+            Pattern::Wildcard(s) | Pattern::Literal(_, s) | Pattern::Variant { span: s, .. } => *s,
+            Pattern::Ident(id) => id.span,
         }
     }
 }

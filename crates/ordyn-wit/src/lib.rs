@@ -50,6 +50,16 @@ impl WitGenerator {
                     }
                     out.push_str("}\n\n");
                 }
+                Declaration::Enum(en) => {
+                    let kebab_name = to_kebab_case(&en.name.name);
+                    out.push_str(&format!("/// Sovereign Enum: {}\n", en.name.name));
+                    out.push_str(&format!("enum {} {{\n", kebab_name));
+                    for variant in &en.variants {
+                        let var_kebab = to_kebab_case(&variant.name.name);
+                        out.push_str(&format!("    {},\n", var_kebab));
+                    }
+                    out.push_str("}\n\n");
+                }
                 _ => {}
             }
         }

@@ -356,6 +356,7 @@ impl TypeChecker {
             Declaration::Function(func) => {
                 self.check_function_decl(func)?;
             }
+            Declaration::Enum(_) => {}
             Declaration::Contract(contract) => {
                 self.enter_scope();
                 for clause in &contract.clauses {
@@ -601,6 +602,26 @@ impl TypeChecker {
                     self.exit_scope();
                 }
             }
+            Stmt::While {
+                condition,
+                body,
+                span: _,
+            } => {
+                let cond_ty = self.check_expr(condition)?;
+                if cond_ty != Type::Bool {
+                    return Err(TypeError::TypeMismatch {
+                        expected: "Bool".to_string(),
+                        found: cond_ty.to_string(),
+                        span: condition.span(),
+                    });
+                }
+                self.enter_scope();
+                for s in &body.statements {
+                    self.check_stmt(s)?;
+                }
+                self.exit_scope();
+            }
+            Stmt::Break(_) | Stmt::Continue(_) => {}
             Stmt::Expr(expr, _) => {
                 self.check_expr(expr)?;
             }
@@ -853,6 +874,31 @@ impl TypeChecker {
                 }
             }
             Expr::Old { expr, .. } => self.check_expr(expr),
+            Expr::Match { target, arms, .. } => {
+                let _target_ty = self.check_expr(target)?;
+                if arms.is_empty() {
+                    return Ok(Type::Unit);
+                }
+                let mut common_ty: Option<Type> = None;
+                for arm in arms {
+                    self.enter_scope();
+                    self.bind_pattern(&arm.pattern)?;
+                    let arm_ty = self.check_expr(&arm.body)?;
+                    self.exit_scope();
+                    if let Some(ref cur) = common_ty {
+                        if !types_compatible(cur, &arm_ty) {
+                            return Err(TypeError::TypeMismatch {
+                                expected: cur.to_string(),
+                                found: arm_ty.to_string(),
+                                span: arm.body.span(),
+                            });
+                        }
+                    } else {
+                        common_ty = Some(arm_ty);
+                    }
+                }
+                Ok(common_ty.unwrap_or(Type::Unit))
+            }
             Expr::Block(block) => {
                 self.enter_scope();
                 for stmt in &block.statements {
@@ -862,6 +908,22 @@ impl TypeChecker {
                 Ok(Type::Unit)
             }
         }
+    }
+
+    fn bind_pattern(&mut self, pat: &Pattern) -> Result<(), TypeError> {
+        match pat {
+            Pattern::Ident(id) => {
+                self.define_var(&id.name, Type::Unknown, false, id.span);
+            }
+            Pattern::Variant {
+                payload_pattern: Some(inner),
+                ..
+            } => {
+                self.bind_pattern(inner)?;
+            }
+            _ => {}
+        }
+        Ok(())
     }
 
     fn resolve_type_ref(&self, type_ref: &TypeRef) -> Result<Type, TypeError> {

@@ -67,12 +67,27 @@ impl Parser {
             TokenKind::Flow => self.parse_flow_decl().map(Declaration::Flow),
             TokenKind::Boundary => self.parse_boundary_decl().map(Declaration::Boundary),
             TokenKind::Interface => self.parse_interface_decl().map(Declaration::Interface),
-            TokenKind::Fn | TokenKind::Pub => self.parse_function_decl().map(Declaration::Function),
+            TokenKind::Enum => self.parse_enum_decl(false).map(Declaration::Enum),
+            TokenKind::Pub => {
+                let pub_token = self.advance();
+                match self.peek() {
+                    TokenKind::Enum => self.parse_enum_decl(true).map(Declaration::Enum),
+                    TokenKind::Fn => self
+                        .parse_function_decl_internal(true)
+                        .map(Declaration::Function),
+                    _ => Err(ParseError::UnexpectedToken {
+                        expected: "fn or enum after pub".to_string(),
+                        found: self.peek(),
+                        span: pub_token.span,
+                    }),
+                }
+            }
+            TokenKind::Fn => self.parse_function_decl().map(Declaration::Function),
             _ => {
                 let token = self.advance();
                 Err(ParseError::UnexpectedToken {
                     expected:
-                        "declaration (entity, capability, contract, flow, boundary, interface, fn)"
+                        "declaration (entity, capability, contract, flow, boundary, interface, fn, enum)"
                             .to_string(),
                     found: token.kind,
                     span: token.span,
@@ -412,6 +427,42 @@ impl Parser {
         })
     }
 
+    fn parse_enum_decl(&mut self, is_pub: bool) -> Result<EnumDecl, ParseError> {
+        let start = self.expect(TokenKind::Enum)?.span;
+        let name = self.parse_ident()?;
+        self.expect(TokenKind::LBrace)?;
+
+        let mut variants = Vec::new();
+        while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
+            let variant_name = self.parse_ident()?;
+            let payload = if self.match_token(&TokenKind::LParen) {
+                let ty = self.parse_type()?;
+                self.expect(TokenKind::RParen)?;
+                Some(ty)
+            } else {
+                None
+            };
+            let span = variant_name.span;
+            variants.push(EnumVariant {
+                name: variant_name,
+                payload,
+                span,
+            });
+            if self.match_token(&TokenKind::Comma) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        let end = self.expect(TokenKind::RBrace)?.span;
+        Ok(EnumDecl {
+            is_pub,
+            name,
+            variants,
+            span: start.merge(end),
+        })
+    }
+
     fn parse_effect_clause(&mut self) -> Result<Vec<Ident>, ParseError> {
         if self.match_token(&TokenKind::With) {
             self.expect(TokenKind::LBracket)?;
@@ -491,8 +542,9 @@ impl Parser {
     }
 
     fn parse_statement(&mut self) -> Result<Stmt, ParseError> {
-        if self.match_token(&TokenKind::Let) {
-            let is_mut = self.match_token(&TokenKind::Mut);
+        let is_let = self.match_token(&TokenKind::Let);
+        let is_mut = self.match_token(&TokenKind::Mut);
+        if is_let || is_mut {
             let name = self.parse_ident()?;
             let ty = if self.match_token(&TokenKind::Colon) {
                 Some(self.parse_type()?)
@@ -554,6 +606,24 @@ impl Parser {
                 else_branch,
                 span: start.merge(end),
             })
+        } else if self.match_token(&TokenKind::While) {
+            let start = self.previous_span();
+            let condition = self.parse_expr()?;
+            let body = self.parse_block()?;
+            let span = start.merge(body.span);
+            Ok(Stmt::While {
+                condition,
+                body,
+                span,
+            })
+        } else if self.match_token(&TokenKind::Break) {
+            let start = self.previous_span();
+            let end = self.expect(TokenKind::Semicolon)?.span;
+            Ok(Stmt::Break(start.merge(end)))
+        } else if self.match_token(&TokenKind::Continue) {
+            let start = self.previous_span();
+            let end = self.expect(TokenKind::Semicolon)?.span;
+            Ok(Stmt::Continue(start.merge(end)))
         } else {
             let expr = self.parse_expr()?;
             if self.match_token(&TokenKind::Eq) {
@@ -773,6 +843,34 @@ impl Parser {
                 self.expect(TokenKind::RParen)?;
                 inner
             }
+            TokenKind::Match => {
+                let start = self.advance().span;
+                let target = self.parse_expr()?;
+                self.expect(TokenKind::LBrace)?;
+                let mut arms = Vec::new();
+                while !self.check(&TokenKind::RBrace) && !self.is_at_end() {
+                    let pattern = self.parse_pattern()?;
+                    self.expect(TokenKind::FatArrow)?;
+                    let body = self.parse_expr()?;
+                    let span = pattern.span().merge(body.span());
+                    arms.push(MatchArm {
+                        pattern,
+                        body,
+                        span,
+                    });
+                    if self.match_token(&TokenKind::Comma) {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                let end = self.expect(TokenKind::RBrace)?.span;
+                Expr::Match {
+                    target: Box::new(target),
+                    arms,
+                    span: start.merge(end),
+                }
+            }
             _ => {
                 let token = self.advance();
                 return Err(ParseError::UnexpectedToken {
@@ -811,6 +909,76 @@ impl Parser {
         }
 
         Ok(expr)
+    }
+
+    fn parse_pattern(&mut self) -> Result<Pattern, ParseError> {
+        let token = self.peek();
+        match token {
+            TokenKind::IntLiteral(i) => {
+                let span = self.advance().span;
+                Ok(Pattern::Literal(Literal::Integer(i), span))
+            }
+            TokenKind::StringLiteral(s) => {
+                let span = self.advance().span;
+                Ok(Pattern::Literal(Literal::String(s), span))
+            }
+            TokenKind::True => {
+                let span = self.advance().span;
+                Ok(Pattern::Literal(Literal::Bool(true), span))
+            }
+            TokenKind::False => {
+                let span = self.advance().span;
+                Ok(Pattern::Literal(Literal::Bool(false), span))
+            }
+            TokenKind::Ident(ref s) if s == "_" => {
+                let span = self.advance().span;
+                Ok(Pattern::Wildcard(span))
+            }
+            TokenKind::Ident(_) => {
+                let mut ident = self.parse_ident()?;
+                let mut enum_name = None;
+                if self.check(&TokenKind::Colon) {
+                    self.advance();
+                    if self.check(&TokenKind::Colon) {
+                        self.advance();
+                        let variant_name = self.parse_ident()?;
+                        enum_name = Some(ident);
+                        ident = variant_name;
+                    }
+                }
+                if self.match_token(&TokenKind::LParen) {
+                    let payload = if !self.check(&TokenKind::RParen) {
+                        Some(Box::new(self.parse_pattern()?))
+                    } else {
+                        None
+                    };
+                    let end = self.expect(TokenKind::RParen)?.span;
+                    Ok(Pattern::Variant {
+                        enum_name,
+                        variant_name: ident.clone(),
+                        payload_pattern: payload,
+                        span: ident.span.merge(end),
+                    })
+                } else if enum_name.is_some() {
+                    Ok(Pattern::Variant {
+                        enum_name,
+                        variant_name: ident.clone(),
+                        payload_pattern: None,
+                        span: ident.span,
+                    })
+                } else {
+                    Ok(Pattern::Ident(ident))
+                }
+            }
+            _ => {
+                let t = self.advance();
+                Err(ParseError::UnexpectedToken {
+                    expected: "pattern".to_string(),
+                    found: t.kind,
+                    span: t.span,
+                })
+            }
+        }
     }
 
     fn parse_ident(&mut self) -> Result<Ident, ParseError> {

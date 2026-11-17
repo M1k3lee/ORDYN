@@ -539,6 +539,9 @@ boundary MainBoundary {
                         ordyn_ast::Declaration::Function(f) => {
                             println!("  [Function] {}", f.name.name)
                         }
+                        ordyn_ast::Declaration::Enum(en) => {
+                            println!("  [Algebraic Enum] {}", en.name.name)
+                        }
                     }
                 }
             } else {

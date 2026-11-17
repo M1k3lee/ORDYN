@@ -1,0 +1,163 @@
+(* ========================================================================= *)
+(* ORDYN Formal Machine-Readable Grammar (ISO/IEC 14977 EBNF)              *)
+(* Specification Baseline: v0.1.0 Sovereign                                 *)
+(* ========================================================================= *)
+
+Program             = { Declaration } ;
+
+Declaration         = EntityDecl
+                    | CapabilityDecl
+                    | ContractDecl
+                    | FlowDecl
+                    | BoundaryDecl
+                    | InterfaceDecl
+                    | FunctionDecl
+                    | EnumDecl ;
+
+(* ------------------------------------------------------------------------- *)
+(* 1. The Six Foundational Sovereign Constructs                              *)
+(* ------------------------------------------------------------------------- *)
+
+EntityDecl          = "entity" Identifier "{" { EntityMember } "}" ;
+EntityMember        = [ "pub" ] ( FieldDecl | MethodDecl ) ;
+FieldDecl           = [ "mut" | "let" ] Identifier ":" Type [ "=" Expression ] ";" ;
+MethodDecl          = "fn" Identifier "(" [ ParameterList ] ")" 
+                      [ "->" Type ] [ EffectClause ] { ContractClause } Block ;
+
+CapabilityDecl      = "capability" Identifier "{" { CapabilityField } "}" ;
+CapabilityField     = Identifier ":" Type ";" ;
+
+ContractDecl        = "contract" Identifier "{" { ContractClause } "}" ;
+ContractClause      = RequiresClause | EnsuresClause | InvariantClause ;
+RequiresClause      = "requires" Expression ;
+EnsuresClause       = "ensures" Expression ;
+InvariantClause     = "invariant" Expression ;
+
+FlowDecl            = "flow" Identifier "(" [ ParameterList ] ")" 
+                      [ "->" Type ] [ EffectClause ] "{" FlowBody "}" ;
+FlowBody            = Expression { ";" Expression } ;
+
+BoundaryDecl        = "boundary" Identifier "{" { BoundaryMember } "}" ;
+BoundaryMember      = GrantClause | QuotaClause | BindClause ;
+GrantClause         = "grant" Identifier "{" [ GrantArgList ] "}" ";" ;
+GrantArgList        = GrantArg { "," GrantArg } ;
+GrantArg            = Identifier ":" Expression ;
+QuotaClause         = "quota" "{" { QuotaField } "}" ;
+QuotaField          = Identifier ":" IntegerLiteral ";" ;
+BindClause          = "bind" Identifier ";" ;
+
+InterfaceDecl       = "interface" Identifier "{" { InterfaceMethod } "}" ;
+InterfaceMethod     = "fn" Identifier "(" [ ParameterList ] ")" 
+                      [ "->" Type ] [ EffectClause ] ";" ;
+
+(* ------------------------------------------------------------------------- *)
+(* 2. Algebraic Enumerations                                                 *)
+(* ------------------------------------------------------------------------- *)
+
+EnumDecl            = [ "pub" ] "enum" Identifier "{" [ EnumVariantList ] "}" ;
+EnumVariantList     = EnumVariant { "," EnumVariant } [ "," ] ;
+EnumVariant         = Identifier [ "(" Type ")" ] ;
+
+(* ------------------------------------------------------------------------- *)
+(* 3. Functions, Parameters, and Effects                                     *)
+(* ------------------------------------------------------------------------- *)
+
+FunctionDecl        = [ "pub" ] "fn" Identifier "(" [ ParameterList ] ")" 
+                      [ "->" Type ] [ EffectClause ] { ContractClause } Block ;
+
+ParameterList       = Parameter { "," Parameter } ;
+Parameter           = [ "mut" ] Identifier ":" Type ;
+
+EffectClause        = "with" "[" [ EffectList ] "]" ;
+EffectList          = Identifier { "," Identifier } ;
+
+(* ------------------------------------------------------------------------- *)
+(* 4. Statements and Blocks                                                  *)
+(* ------------------------------------------------------------------------- *)
+
+Block               = "{" { Statement } "}" ;
+
+Statement           = LetStmt
+                    | AssignStmt
+                    | ReturnStmt
+                    | IfStmt
+                    | WhileStmt
+                    | BreakStmt
+                    | ContinueStmt
+                    | ExprStmt ;
+
+LetStmt             = ( "let" [ "mut" ] | "mut" ) Identifier [ ":" Type ] [ "=" Expression ] ";" ;
+AssignStmt          = Expression "=" Expression ";" ;
+ReturnStmt          = "return" [ Expression ] ";" ;
+IfStmt              = "if" Expression Block [ "else" ( IfStmt | Block ) ] ;
+WhileStmt           = "while" Expression Block ;
+BreakStmt           = "break" ";" ;
+ContinueStmt        = "continue" ";" ;
+ExprStmt            = Expression ";" ;
+
+(* ------------------------------------------------------------------------- *)
+(* 5. Expressions and Pattern Matching                                       *)
+(* ------------------------------------------------------------------------- *)
+
+Expression          = LogicalOrExpr ;
+LogicalOrExpr       = LogicalAndExpr { "||" LogicalAndExpr } ;
+LogicalAndExpr      = EqualityExpr { "&&" EqualityExpr } ;
+EqualityExpr        = RelationalExpr { ( "==" | "!=" ) RelationalExpr } ;
+RelationalExpr      = AdditiveExpr { ( "<" | "<=" | ">" | ">=" ) AdditiveExpr } ;
+AdditiveExpr        = MultiplicativeExpr { ( "+" | "-" ) MultiplicativeExpr } ;
+MultiplicativeExpr  = UnaryExpr { ( "*" | "/" | "%" ) UnaryExpr } ;
+UnaryExpr           = ( "!" | "-" ) UnaryExpr | PostfixExpr ;
+
+PostfixExpr         = PrimaryExpr { CallSuffix | FieldSuffix } ;
+CallSuffix          = "(" [ ArgumentList ] ")" ;
+FieldSuffix         = "." Identifier ;
+ArgumentList        = Expression { "," Expression } ;
+
+PrimaryExpr         = IntegerLiteral
+                    | FloatLiteral
+                    | StringLiteral
+                    | BooleanLiteral
+                    | "none"
+                    | OldExpr
+                    | MatchExpr
+                    | Identifier
+                    | "(" Expression ")" ;
+
+OldExpr             = "old" "(" Expression ")" ;
+
+MatchExpr           = "match" Expression "{" [ MatchArmList ] "}" ;
+MatchArmList        = MatchArm { "," MatchArm } [ "," ] ;
+MatchArm            = Pattern "=>" Expression ;
+
+Pattern             = WildcardPattern
+                    | LiteralPattern
+                    | VariantPattern
+                    | IdentPattern ;
+
+WildcardPattern     = "_" ;
+LiteralPattern      = IntegerLiteral | StringLiteral | BooleanLiteral ;
+VariantPattern      = [ Identifier "::" ] Identifier [ "(" Pattern ")" ] ;
+IdentPattern        = Identifier ;
+
+(* ------------------------------------------------------------------------- *)
+(* 6. Types                                                                  *)
+(* ------------------------------------------------------------------------- *)
+
+Type                = PrimitiveType | GenericType | NamedType ;
+PrimitiveType       = "Int" | "Float" | "Bool" | "String" | "Bytes" | "Unit" ;
+GenericType         = Identifier "<" Type { "," Type } ">" ;
+NamedType           = Identifier ;
+
+(* ------------------------------------------------------------------------- *)
+(* 7. Lexical Tokens & Literals                                              *)
+(* ------------------------------------------------------------------------- *)
+
+Identifier          = ( Letter | "_" ) { Letter | Digit | "_" } ;
+IntegerLiteral      = [ "-" ] Digit { Digit } ;
+FloatLiteral        = [ "-" ] Digit { Digit } "." Digit { Digit } ;
+StringLiteral       = '"' { AnyChar - ( '"' | '\' ) | EscapeSequence } '"' ;
+BooleanLiteral      = "true" | "false" ;
+
+Letter              = "A" .. "Z" | "a" .. "z" ;
+Digit               = "0" .. "9" ;
+EscapeSequence      = '\' ( '"' | '\' | '/' | 'n' | 'r' | 't' ) ;

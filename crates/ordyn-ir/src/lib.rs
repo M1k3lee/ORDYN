@@ -320,6 +320,15 @@ impl IrLowerer {
                     }
                 }
             }
+            Stmt::While {
+                condition, body, ..
+            } => {
+                let _cond_op = self.lower_expr(condition)?;
+                for s in &body.statements {
+                    self.lower_stmt(s)?;
+                }
+            }
+            Stmt::Break(_) | Stmt::Continue(_) => {}
             Stmt::Expr(expr, _) => {
                 self.lower_expr(expr)?;
             }
@@ -390,6 +399,14 @@ impl IrLowerer {
                 Ok(Operand::Reg(dest))
             }
             Expr::Old { expr, .. } => self.lower_expr(expr),
+            Expr::Match { target, arms, .. } => {
+                let _target_op = self.lower_expr(target)?;
+                let dest = self.alloc_reg();
+                for arm in arms {
+                    let _arm_op = self.lower_expr(&arm.body)?;
+                }
+                Ok(Operand::Reg(dest))
+            }
             Expr::Block(block) => {
                 for stmt in &block.statements {
                     self.lower_stmt(stmt)?;

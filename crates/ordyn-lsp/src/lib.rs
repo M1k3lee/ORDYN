@@ -136,6 +136,13 @@ impl LanguageService {
                                 span: f.span,
                             });
                         }
+                        Declaration::Enum(en) => {
+                            symbols.push(LspSymbol {
+                                name: en.name.name.clone(),
+                                kind: "Enum".to_string(),
+                                span: en.span,
+                            });
+                        }
                     }
                 }
             }

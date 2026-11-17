@@ -293,6 +293,13 @@ impl EffectAnalyzer {
                     self.analyze_block(eb, function_name, declared_effects, entity_name)?;
                 }
             }
+            Stmt::While {
+                condition, body, ..
+            } => {
+                self.analyze_expr(condition, function_name, declared_effects, entity_name)?;
+                self.analyze_block(body, function_name, declared_effects, entity_name)?;
+            }
+            Stmt::Break(_) | Stmt::Continue(_) => {}
             Stmt::Expr(expr, _) => {
                 self.analyze_expr(expr, function_name, declared_effects, entity_name)?;
             }
@@ -365,6 +372,12 @@ impl EffectAnalyzer {
             }
             Expr::Old { expr, .. } => {
                 self.analyze_expr(expr, function_name, declared_effects, entity_name)?;
+            }
+            Expr::Match { target, arms, .. } => {
+                self.analyze_expr(target, function_name, declared_effects, entity_name)?;
+                for arm in arms {
+                    self.analyze_expr(&arm.body, function_name, declared_effects, entity_name)?;
+                }
             }
             Expr::Block(block) => {
                 self.analyze_block(block, function_name, declared_effects, entity_name)?;

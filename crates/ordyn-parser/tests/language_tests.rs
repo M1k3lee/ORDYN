@@ -67,3 +67,70 @@ fn test_canonical_example_parses_completely() {
         _ => panic!("Expected Boundary declaration"),
     }
 }
+
+#[test]
+fn test_while_loop_and_control_flow() {
+    let source = r#"
+fn compute_sum(max: Int) -> Int {
+    mut sum = 0;
+    mut i = 0;
+    while i < max {
+        if i == 5 {
+            i = i + 1;
+            continue;
+        }
+        if i > 10 {
+            break;
+        }
+        sum = sum + i;
+        i = i + 1;
+    }
+    return sum;
+}
+"#;
+    let mut parser = Parser::from_source(source).unwrap();
+    let program = parser.parse_program().unwrap();
+    assert_eq!(program.declarations.len(), 1);
+
+    if let Declaration::Function(f) = &program.declarations[0] {
+        assert_eq!(f.name.name, "compute_sum");
+        assert_eq!(f.body.statements.len(), 4);
+        assert!(matches!(f.body.statements[2], Stmt::While { .. }));
+    } else {
+        panic!("Expected function declaration");
+    }
+}
+
+#[test]
+fn test_enum_and_match_expressions() {
+    let source = r#"
+enum TransactionState {
+    Pending,
+    Approved(Int),
+    Rejected(String)
+}
+
+fn handle_state(state: TransactionState) -> String {
+    let result = match state {
+        TransactionState::Pending => "Waiting",
+        TransactionState::Approved(code) => "Success",
+        _ => "Failed"
+    };
+    return result;
+}
+"#;
+    let mut parser = Parser::from_source(source).unwrap();
+    let program = parser.parse_program().unwrap();
+    assert_eq!(program.declarations.len(), 2);
+
+    if let Declaration::Enum(e) = &program.declarations[0] {
+        assert_eq!(e.name.name, "TransactionState");
+        assert_eq!(e.variants.len(), 3);
+        assert_eq!(e.variants[0].name.name, "Pending");
+        assert!(e.variants[0].payload.is_none());
+        assert_eq!(e.variants[1].name.name, "Approved");
+        assert!(e.variants[1].payload.is_some());
+    } else {
+        panic!("Expected enum declaration");
+    }
+}

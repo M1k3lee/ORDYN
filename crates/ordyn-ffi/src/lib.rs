@@ -218,6 +218,22 @@ impl CHeaderGenerator {
         out.push_str("typedef uint64_t ordyn_cap_handle_t;\n");
         out.push_str("typedef struct ordyn_boundary_s* ordyn_boundary_t;\n\n");
 
+        out.push_str("/* --- ORDYN Enumerations (C Enum Mappings) --- */\n");
+        for decl in &program.declarations {
+            if let ordyn_ast::Declaration::Enum(en) = decl {
+                out.push_str(&format!("typedef enum ordyn_{}_e {{\n", en.name.name));
+                for (idx, variant) in en.variants.iter().enumerate() {
+                    out.push_str(&format!(
+                        "    ORDYN_{}_{} = {},\n",
+                        en.name.name.to_uppercase(),
+                        variant.name.name.to_uppercase(),
+                        idx
+                    ));
+                }
+                out.push_str(&format!("}} ordyn_{}_t;\n\n", en.name.name));
+            }
+        }
+
         out.push_str("/* --- ORDYN Entities (C Struct Mappings) --- */\n");
         for decl in &program.declarations {
             if let ordyn_ast::Declaration::Entity(e) = decl {

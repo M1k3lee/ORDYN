@@ -138,6 +138,16 @@ impl ArchitectureGraph {
                         properties: HashMap::new(),
                     });
                 }
+                Declaration::Enum(en) => {
+                    let mut props = HashMap::new();
+                    props.insert("variants".to_string(), en.variants.len().to_string());
+                    graph.nodes.push(VisualNode {
+                        id: format!("enum_{}", en.name.name),
+                        name: en.name.name.clone(),
+                        kind: "Enum".to_string(),
+                        properties: props,
+                    });
+                }
             }
         }
 

@@ -90,12 +90,17 @@ Statement           = LetStmt
                     | AssignmentStmt
                     | ReturnStmt
                     | IfStmt
-                    | MatchStmt
+                    | WhileStmt
+                    | BreakStmt
+                    | ContinueStmt
                     | ExpressionStmt ;
 
-LetStmt             = "let" [ "mut" ] Identifier [ ":" Type ] [ "=" Expression ] ";" ;
+LetStmt             = ( "let" [ "mut" ] | "mut" ) Identifier [ ":" Type ] [ "=" Expression ] ";" ;
 AssignmentStmt      = Identifier "=" Expression ";" ;
 ReturnStmt          = "return" [ Expression ] ";" ;
+WhileStmt           = "while" Expression Block ;
+BreakStmt           = "break" ";" ;
+ContinueStmt        = "continue" ";" ;
 ExpressionStmt      = Expression ";" ;
 
 IfStmt              = "if" Expression Block [ "else" ( Block | IfStmt ) ] ;
