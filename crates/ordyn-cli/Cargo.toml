@@ -23,6 +23,7 @@ ordyn-forge = { path = "../ordyn-forge" }
 ordyn-visual = { path = "../ordyn-visual" }
 ordyn-prover = { path = "../ordyn-prover" }
 ordyn-wit = { path = "../ordyn-wit" }
+ordyn-ffi = { path = "../ordyn-ffi" }
 clap.workspace = true
 miette.workspace = true
 thiserror.workspace = true

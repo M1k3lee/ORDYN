@@ -124,6 +124,17 @@ enum Commands {
         #[arg(short, long)]
         output: Option<PathBuf>,
     },
+    /// Generate standard C-ABI header (.h) for embedding ORDYN into C/C++, Python, Swift, or Node.js
+    Ffi {
+        /// Path to the source file (.ordyn)
+        file: PathBuf,
+        /// Module name for header guard and prefix
+        #[arg(long)]
+        module: Option<String>,
+        /// Output destination (.h)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
     /// Run automated tests across the project
     Test,
 }
@@ -697,6 +708,30 @@ boundary MainBoundary {
                 out_file.display()
             );
             println!("\n=== Generated WIT Interface ===\n{}", wit);
+        }
+        Commands::Ffi {
+            file,
+            module,
+            output,
+        } => {
+            let source = fs::read_to_string(&file).into_diagnostic()?;
+            let mut parser = Parser::from_source(&source).map_err(|e| miette::miette!("{}", e))?;
+            let program = parser
+                .parse_program()
+                .map_err(|e| miette::miette!("{}", e))?;
+
+            let mod_name = module.unwrap_or_else(|| {
+                file.file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("app")
+                    .to_string()
+            });
+
+            let header = ordyn_ffi::CHeaderGenerator::generate(&program, &mod_name);
+            let out_file = output.unwrap_or_else(|| file.with_extension("h"));
+            fs::write(&out_file, &header).into_diagnostic()?;
+            println!("C-ABI header interface generated: {}", out_file.display());
+            println!("\n=== Generated C Header ===\n{}", header);
         }
         Commands::Test => {
             println!("Executing ORDYN test suite...");

@@ -7,6 +7,8 @@ license.workspace = true
 
 [dependencies]
 ordyn-guard = { path = "../ordyn-guard" }
+ordyn-ast = { path = "../ordyn-ast" }
 thiserror.workspace = true
 
 [dev-dependencies]
+ordyn-parser = { path = "../ordyn-parser" }
