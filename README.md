@@ -22,105 +22,216 @@
 
 ## 🎨 Interactive Live Online Tools
 
-- 🎮 **[Hack the Sovereign Vault CTF Challenge](https://m1k3lee.github.io/ORDYN/)**: Launch real exploit payloads directly against the browser-compiled WebAssembly Security Kernel.
-- 🛡️ **[ORDYN Sovereign Studio](https://m1k3lee.github.io/ORDYN/studio/)**: Interactive Web IDE with real-time capability DAG rendering, SMT-LIB2 contract prover inspector, and Red-Lab exploit arena.
+Experience the ORDYN ecosystem directly in your browser with zero installation:
+
+- 🎮 **[Hack the Sovereign Vault CTF Challenge](https://m1k3lee.github.io/ORDYN/)**: An interactive security challenge where you launch real exploit payloads (Capability Forgery, Lattice Widening, Contract Underflows, SSRF Egress) directly against the WebAssembly-compiled Security Kernel.
+- 🛡️ **[ORDYN Sovereign Studio](https://m1k3lee.github.io/ORDYN/studio/)**: An interactive in-browser IDE with live architectural DAG synthesis, SMT-LIB2 contract prover inspector, and Red-Lab exploit arena.
 
 ---
 
-## 🎯 Live Security Challenge: Hack the Sovereign Vault
+## ⚡ Quickstart in 60 Seconds
 
-> **Interactive Online Challenge:** Can you breach ORDYN's zero-ambient-authority boundary?  
-> Launch real attack vectors (Capability Forgery, Lattice Widening, Contract Underflow, SSRF Egress, and ReDoS Starvation) directly against the ORDYN Security Kernel:  
-> 🔗 **[Launch Interactive Challenge Website (m1k3lee.github.io/ORDYN)](https://m1k3lee.github.io/ORDYN/)**
+### 1. Install the ORDYN Toolchain
+```bash
+# Clone the repository
+git clone https://github.com/M1k3lee/ORDYN.git
+cd ORDYN
 
-- **Target Program:** [`examples/challenge_vault.ordyn`](examples/challenge_vault.ordyn) (1,000,000 SOV Simulated CTF Vault Prize)
-- **Local Runner:** `python demo/server.py` &rarr; `http://localhost:8088`
-- **Features:** Real-time attack console, live architectural DAG explorer, custom payload compiler, and cryptographic audit trail receipts.
+# Install the unified ordyn CLI binary
+cargo install --path crates/ordyn-cli
+```
 
----
+### 2. Scaffold a New Project
+Choose from pre-configured production templates:
+```bash
+# Options: --template web | cli | ledger | minimal
+ordyn new my_cloud_service --template web
+cd my_cloud_service
+```
 
-## Overview
+### 3. Verify Security Invariants & Formal Contracts
+Run static semantic checks, algebraic effect verification, and SMT contract proving:
+```bash
+ordyn verify main.ordyn
+```
 
-ORDYN is a security-first programming language and sovereign computing platform designed for modern, verifiable software development. 
+### 4. Run Inside the Sandboxed Runtime
+Execute functions with strict instruction fuel budgets and non-strippable contract traps:
+```bash
+ordyn run main.ordyn --function get_status
+```
 
-Traditional software ecosystems require developers to stitch together disparate languages, databases, authentication middleware, and network firewalls—each with independent security boundaries and vulnerabilities. ORDYN unifies these concerns into an integrated compiler, intermediate representation, runtime, and security architecture.
-
----
-
-## Architectural Principles
-
-1. **Security First:** Security is intrinsic to the compiler and runtime, not an optional library or afterthought.
-2. **Zero Ambient Authority:** Privileged operations require explicit, unforgeable capabilities.
-3. **Information-Flow Lattice:** Data classifications (`Public`, `Internal`, `Confidential`, `Restricted`) prevent unauthorized data leakage at compile time.
-4. **Deterministic & Reproducible:** Identical inputs yield bit-for-bit identical compiled artifacts.
-5. **AI-Audited, Never AI-Trusted:** AI tools assist developers in design and testing, but the Security Kernel and compiler enforce verification deterministically without AI authority.
-
----
-
-## The Six Foundational Constructs
-
-ORDYN organizes systems around six primary language constructs:
-
-1. **`entity`**: Autonomous, stateful domain component.
-2. **`capability`**: Unforgeable, typed token of authority.
-3. **`contract`**: Formal preconditions, postconditions, and invariants.
-4. **`flow`**: Declarative, verifiable data pipeline.
-5. **`boundary`**: Isolated execution sandbox with resource quotas.
-6. **`interface`**: Formally typed protocol for cross-boundary communication.
-
----
-
-## Repository Structure
-
-```text
-/ORDYN
-├── docs/
-│   ├── architecture/
-│   │   ├── SYSTEM_ARCHITECTURE.md
-│   │   ├── COMPILER_ARCHITECTURE.md
-│   │   ├── RUNTIME_ARCHITECTURE.md
-│   │   └── SECURITY_ARCHITECTURE.md
-│   ├── language/
-│   │   ├── SPECIFICATION.md
-│   │   ├── GRAMMAR.md
-│   │   ├── TYPE_SYSTEM.md
-│   │   ├── EFFECTS.md
-│   │   ├── CAPABILITIES.md
-│   │   └── CONTRACTS.md
-│   ├── development/
-│   │   ├── ROADMAP.md
-│   │   ├── IMPLEMENTATION_STATUS.md
-│   │   ├── DECISIONS.md
-│   │   └── KNOWN_LIMITATIONS.md
-│   ├── security/
-│   │   ├── THREAT_MODEL.md
-│   │   ├── FORMAL_ENGINEERING_RISK_ASSESSMENT.md
-│   │   ├── SECURITY_TESTS.md
-│   │   └── VERIFICATION_STATUS.md
-│   └── contributing/
-│       ├── CONTRIBUTING.md
-│       └── RFC_PROCESS.md
-├── crates/             # Rust Workspace Crate Packages (Compiler & Runtime)
-├── examples/           # Canonical ORDYN Source Code Examples (.ordyn)
-└── tests/              # End-to-End and Security Test Suites
+### 5. Generate Visual Architecture Diagrams
+Export an interactive Mermaid DAG showing capability delegations, boundaries, and quotas:
+```bash
+ordyn visual main.ordyn
+# Opens an interactive HTML explorer: main.html
 ```
 
 ---
 
-## Documentation Navigation
+## 🛠️ Building Any Type of Application in ORDYN
 
-- [System Architecture](file:///c:/Users/mike/ORDYN/docs/architecture/SYSTEM_ARCHITECTURE.md)
-- [Compiler Architecture](file:///c:/Users/mike/ORDYN/docs/architecture/COMPILER_ARCHITECTURE.md)
-- [Runtime Architecture](file:///c:/Users/mike/ORDYN/docs/architecture/RUNTIME_ARCHITECTURE.md)
-- [Security Architecture](file:///c:/Users/mike/ORDYN/docs/architecture/SECURITY_ARCHITECTURE.md)
-- [Language Specification](file:///c:/Users/mike/ORDYN/docs/language/SPECIFICATION.md)
-- [Formal Grammar (EBNF)](file:///c:/Users/mike/ORDYN/docs/language/GRAMMAR.md)
-- [Type System Specification](file:///c:/Users/mike/ORDYN/docs/language/TYPE_SYSTEM.md)
-- [Effect System Specification](file:///c:/Users/mike/ORDYN/docs/language/EFFECTS.md)
-- [Capability Model](file:///c:/Users/mike/ORDYN/docs/language/CAPABILITIES.md)
-- [Contract Verification](file:///c:/Users/mike/ORDYN/docs/language/CONTRACTS.md)
-- [Master Roadmap](file:///c:/Users/mike/ORDYN/docs/development/ROADMAP.md)
-- [Implementation Status](file:///c:/Users/mike/ORDYN/docs/development/IMPLEMENTATION_STATUS.md)
-- [Architecture Decisions (ADRs)](file:///c:/Users/mike/ORDYN/docs/development/DECISIONS.md)
-- [Threat Model](file:///c:/Users/mike/ORDYN/docs/security/THREAT_MODEL.md)
-- [Formal Engineering Risk Assessment](file:///c:/Users/mike/ORDYN/docs/security/FORMAL_ENGINEERING_RISK_ASSESSMENT.md)
+ORDYN is engineered as a **general-purpose, sovereign computing platform**. The language provides native constructs that replace complex middleware, access controls, and firewall configurations:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        WHAT CAN YOU BUILD IN ORDYN?                    │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+    ┌───────────────────┬───────────┴───────────┬───────────────────┐
+    ▼                   ▼                       ▼                   ▼
+Cloud Microservices  Financial Systems      AI Agent Sandboxes  WASM Edge Services
+(ORDYN Orbit)       (SMT Verified)          (Zero Ambience)     (Component Model)
+```
+
+### 1. Zero-Trust Cloud Microservices (ORDYN Orbit)
+Build high-throughput web APIs and microservices where handlers are isolated inside cryptographic `boundary` sandboxes. A vulnerability in an image parser or logging library cannot leak environment variables, read unauthorized database tables, or open outbound sockets.
+- **Reference:** [`examples/orbit_payment_service.ordyn`](examples/orbit_payment_service.ordyn)
+
+### 2. High-Assurance Financial & Ledger Engines
+Write financial code with mathematical certainty. Invariants (`balance >= 0`), preconditions (`amount > 0`), and postconditions (`self.balance == old(self.balance) + amount`) are either proven at compile-time by the SMT prover or enforced via non-strippable hardware/software traps.
+- **Reference:** [`examples/secure_banking_service.ordyn`](examples/secure_banking_service.ordyn)
+
+### 3. Autonomous AI Agent Execution Environments
+The safest runtime for running AI-generated code or untrusted autonomous agents. Entities run with strict fuel limits (preventing infinite loops), memory ceilings, and zero ambient file or network access without explicit unforgeable capability handles.
+
+### 4. WebAssembly Edge Components (WASI 0.2 / Component Model)
+Compile ORDYN components to standard WebAssembly Component Model `.wasm` and `.wit` interfaces for deployment on Cloudflare Workers, Fastly Compute, or Wasmtime:
+```bash
+ordyn wit main.ordyn --output main.wit
+ordyn build main.ordyn --output main.wasm
+```
+
+### 5. Secure CLI Tools & System Daemons
+Build command-line utilities and system daemons with capability-gated access to environment variables (`EnvRead`), monotonic clock timers (`Clock`), and sandboxed filesystems (`StorageRead`, `StorageWrite`).
+
+---
+
+## 🧩 The Six Foundational Constructs
+
+ORDYN eliminates accidental complexity by replacing fragile middleware with 6 first-class language constructs:
+
+```ordyn
+// 1. CAPABILITY: Unforgeable, typed token of authority
+capability StorageWrite {
+    namespace: String;
+}
+
+// 2. INTERFACE: Typed cross-boundary contract
+interface VaultProtocol {
+    fn deposit(amount: Int) -> Result<Int, String> with [StorageWrite];
+}
+
+// 3. ENTITY: Autonomous, stateful domain component
+entity BankVault {
+    let vault_id: String;
+    mut balance: Int;
+
+    // 4. CONTRACT: Mathematical pre/postconditions
+    pub fn deposit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.balance == old(self.balance) + amount
+    {
+        self.balance = self.balance + amount;
+        return Ok(self.balance);
+    }
+}
+
+// 5. BOUNDARY: Hardware/Software isolated execution sandbox
+boundary FinancialCoreBoundary {
+    grant StorageWrite { namespace: "prod/vault/v1" };
+
+    quota {
+        memory_limit: 128; // Megabytes
+        fuel_limit: 1000000; // Instructions
+    }
+
+    bind BankVault;
+}
+
+// 6. FLOW: Declarative, verifiable data pipeline
+flow AuditPipeline(entry: String) -> Unit with [StorageWrite] {
+    // Declarative verifiable stream processing
+}
+```
+
+---
+
+## ⚖️ Why ORDYN? (Platform Comparison)
+
+| Feature | ORDYN | Rust | Go | TypeScript / Node |
+|---|:---:|:---:|:---:|:---:|
+| **Zero Ambient Authority** | **Native (Kernel)** | ❌ (Ambient OS) | ❌ (Ambient OS) | ❌ (Ambient OS) |
+| **Formal SMT Contract Prover** | **Built-in (Z3/LIA)** | ❌ (External Tools) | ❌ (None) | ❌ (None) |
+| **Non-Strippable Contract Traps** | **Intrinsic** | Optional (`debug_assert`) | Manual | Manual |
+| **Algebraic Effect System** | **Pure by default** | ❌ (No Effects) | ❌ (No Effects) | ❌ (No Effects) |
+| **Architectural Boundaries** | **First-Class (`boundary`)** | ❌ (Processes/VMs) | ❌ (Processes/VMs) | ❌ (Containers) |
+| **Supply-Chain Capability Diffs** | **Built-in (`ordyn add`)** | ❌ (Cargo Audits) | ❌ (None) | ❌ (NPM Audits) |
+| **Instruction Fuel Governor** | **Built-in** | ❌ (None) | ❌ (None) | ❌ (None) |
+| **WASM Component Model (`.wit`)**| **Native Generator** | Via External Crates | Partial | ❌ (None) |
+
+---
+
+## 💻 Complete CLI Reference
+
+| Command | Usage | Description |
+|---|---|---|
+| `ordyn new` | `ordyn new <name> [--template <type>]` | Scaffolds a new project (`web`, `cli`, `ledger`, `minimal`) |
+| `ordyn check` | `ordyn check <file.ordyn>` | Static type checking and algebraic effect analysis |
+| `ordyn verify` | `ordyn verify <file.ordyn>` | Formal contract proving via SMT-LIB2 / Presburger LIA |
+| `ordyn run` | `ordyn run <file.ordyn> [--function <fn>]` | Executes functions inside sandboxed fuel-governed runtime |
+| `ordyn build` | `ordyn build <file.ordyn>` | Compiles Typed SSA IR to WebAssembly Core bytecode |
+| `ordyn visual` | `ordyn visual <file.ordyn>` | Generates Mermaid security DAG and interactive HTML explorer |
+| `ordyn wit` | `ordyn wit <file.ordyn>` | Emits standard WebAssembly Component Model `.wit` interfaces |
+| `ordyn add` | `ordyn add <pkg> [--grant-cap <cap>]` | Adds dependency with zero-ambient capability constraints |
+| `ordyn lock` | `ordyn lock` | Generates immutable SHA-256 cryptographic lockfile (`ordyn.lock`) |
+| `ordyn publish`| `ordyn publish <file.ordyn>` | Digitally signs and packages project into `.ordyn-pkg` archive |
+| `ordyn inspect`| `ordyn inspect <pkg.ordyn-pkg>` | Statically inspects package capabilities, quotas, and hashes |
+| `ordyn studio` | `ordyn studio [--port 3000]` | Launches the interactive Sovereign Studio in your browser |
+| `ordyn repl` | `ordyn repl` | Starts an interactive evaluation and security check session |
+
+---
+
+## 🏛️ Ecosystem Architecture (17 Workspace Crates)
+
+```text
+/ORDYN
+├── assets/                          # Official brand identity & dark/light banners
+├── demo/                            # Interactive CTF Challenge & Sovereign Studio Web App
+├── studio/                          # Standalone Sovereign Studio sources
+├── editors/code/                    # Official VS Code Language Extension
+├── tree-sitter-ordyn/               # Official Tree-sitter Grammar (Neovim, Zed, Helix)
+├── examples/                        # Canonical sample applications (.ordyn)
+└── crates/
+    ├── ordyn-diagnostics/           # Source byte spans & miette rich diagnostics
+    ├── ordyn-ast/                   # Typed AST for all 6 foundational constructs
+    ├── ordyn-lexer/                 # Zero-copy tokenizer with exact span tracking
+    ├── ordyn-parser/                # Recursive descent & Pratt precedence parser
+    ├── ordyn-types/                 # Bidirectional type checker & null-safety
+    ├── ordyn-effects/               # Algebraic effect checker (Pure by default)
+    ├── ordyn-ir/                    # Typed SSA Intermediate Representation
+    ├── ordyn-guard/                 # Security Kernel & Capability Table
+    ├── ordyn-prover/                # SMT-LIB2 / Presburger LIA formal contract prover
+    ├── ordyn-ffi/                   # C-ABI foreign function bridge & capability gate
+    ├── ordyn-orbit/                 # Zero-trust cloud microservices framework
+    ├── ordyn-wit/                   # WASM Component Model WIT interface emitter
+    ├── ordyn-runtime/               # Sandboxed execution engine & fuel governor
+    ├── ordyn-stdlib/                # Transactional storage, clocks, and environment
+    ├── ordyn-forge/                 # Package manager, capability differ, digital signatures
+    ├── ordyn-lsp/                   # Language Server Protocol engine & daemon
+    ├── ordyn-visual/                # Visual DAG compiler & interactive HTML explorer
+    ├── ordyn-red-lab/               # Adversarial attack harness & CVE proofs (Log4j, Heartbleed)
+    ├── ordyn-wasm/                  # In-browser WebAssembly compiler exports
+    └── ordyn-cli/                   # Unified developer CLI binary (`ordyn`)
+```
+
+---
+
+## 📜 License
+
+Dual-licensed under either:
+- **Apache License, Version 2.0** ([LICENSE-APACHE](LICENSE) or `http://www.apache.org/licenses/LICENSE-2.0`)
+- **MIT license** ([LICENSE-MIT](LICENSE) or `http://opensource.org/licenses/MIT`)
+
+at your option.

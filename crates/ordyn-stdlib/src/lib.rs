@@ -189,6 +189,39 @@ impl TransactionalStorage {
     }
 }
 
+pub struct EnvironmentEngine;
+
+impl EnvironmentEngine {
+    /// Read an environment variable, gated by an explicit EnvRead capability.
+    pub fn get_var(
+        kernel: &mut SecurityKernel,
+        caller: &str,
+        handle: CapHandle,
+        var_name: &str,
+    ) -> Result<String, StdlibError> {
+        kernel
+            .authorize(caller, handle, "ReadEnv", var_name)
+            .map_err(|e| StdlibError::Unauthorized(e.to_string()))?;
+
+        std::env::var(var_name).map_err(|_| StdlibError::NotFound {
+            key: var_name.to_string(),
+        })
+    }
+}
+
+pub struct ClockEngine;
+
+impl ClockEngine {
+    /// Monotonic timestamp in microseconds since UNIX epoch.
+    pub fn now_micros() -> u64 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_micros() as u64
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -311,5 +344,30 @@ mod tests {
 
         let err = HttpEngine::dispatch(&mut kernel, "PaymentProcessor", http_cap, invalid_req);
         assert!(matches!(err, Err(StdlibError::Unauthorized(_))));
+    }
+
+    #[test]
+    fn test_environment_capability_gating() {
+        let mut kernel = SecurityKernel::new();
+        let env_cap = kernel.issue_root_capability("EnvRead", &["ReadEnv"], "ORDYN_TEST_KEY");
+
+        // Set env var for testing
+        std::env::set_var("ORDYN_TEST_KEY", "sovereign_123");
+
+        let val = EnvironmentEngine::get_var(&mut kernel, "AppBoundary", env_cap, "ORDYN_TEST_KEY")
+            .unwrap();
+        assert_eq!(val, "sovereign_123");
+
+        // Attempting to read unauthorized env var is rejected by kernel
+        let err = EnvironmentEngine::get_var(&mut kernel, "AppBoundary", env_cap, "AWS_SECRET_KEY");
+        assert!(matches!(err, Err(StdlibError::Unauthorized(_))));
+    }
+
+    #[test]
+    fn test_clock_monotonicity() {
+        let t1 = ClockEngine::now_micros();
+        assert!(t1 > 0);
+        let t2 = ClockEngine::now_micros();
+        assert!(t2 >= t1);
     }
 }

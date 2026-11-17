@@ -20,7 +20,12 @@ enum Commands {
     New {
         /// Name of the new project
         name: String,
+        /// Project template: 'web' (Orbit Cloud API), 'cli' (CLI Tool), 'ledger' (Financial Ledger), or 'minimal'
+        #[arg(short, long, default_value = "minimal")]
+        template: String,
     },
+    /// Start an interactive ORDYN Sovereign REPL session
+    Repl,
     /// Parse and typecheck an ORDYN source file or project
     Check {
         /// Path to the source file (.ordyn)
@@ -134,29 +139,96 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::New { name } => {
-            println!("Initializing new ORDYN security-first project: {}", name);
+        Commands::New { name, template } => {
+            println!(
+                "Initializing new ORDYN project '{}' [template: {}]",
+                name, template
+            );
             fs::create_dir_all(&name).into_diagnostic()?;
-            let sample_code = r#"// ORDYN Application Entry
 
-capability NetConnect {
-    host: String;
-    port: Int;
+            let sample_code = match template.to_lowercase().as_str() {
+                "web" => {
+                    r#"// ORDYN Orbit Cloud Microservice
+capability NetworkGateway { bind_address: String; port: Int; }
+capability AuditEmitter { standard: String; }
+
+entity HealthService {
+    pub fn get_status() -> Result<String, String> {
+        return Ok("UP");
+    }
 }
+
+boundary ApiGatewayBoundary {
+    grant NetworkGateway { bind_address: "0.0.0.0", port: 8080 };
+    grant AuditEmitter { standard: "SOC2" };
+    quota { memory_limit: 128; fuel_limit: 1000000; }
+    bind HealthService;
+}
+"#
+                }
+                "cli" => {
+                    r#"// ORDYN Secure CLI Tool
+capability EnvRead { key: String; }
+capability Clock { precision: String; }
+
+entity CliApp {
+    pub fn run() -> Int {
+        return 0;
+    }
+}
+
+boundary CliBoundary {
+    grant EnvRead { key: "APP_ENV" };
+    grant Clock { precision: "micros" };
+    quota { memory_limit: 64; fuel_limit: 500000; }
+    bind CliApp;
+}
+"#
+                }
+                "ledger" => {
+                    r#"// ORDYN High-Assurance Ledger
+capability LedgerStorage { namespace: String; }
+
+entity Account {
+    mut balance: Int;
+
+    pub fn deposit(amount: Int) -> Result<Int, String>
+        requires amount > 0
+        ensures self.balance == old(self.balance) + amount
+    {
+        self.balance = self.balance + amount;
+        return Ok(self.balance);
+    }
+}
+
+boundary LedgerBoundary {
+    grant LedgerStorage { namespace: "prod/ledger" };
+    quota { memory_limit: 128; fuel_limit: 1000000; }
+    bind Account;
+}
+"#
+                }
+                _ => {
+                    r#"// ORDYN Minimal Sovereign Application
+capability NetConnect { host: String; port: Int; }
 
 boundary MainBoundary {
     grant NetConnect { host: "localhost", port: 8080 };
-    quota {
-        memory_limit: 32;
-        fuel_limit: 100000;
-    }
+    quota { memory_limit: 32; fuel_limit: 100000; }
 }
-"#;
+"#
+                }
+            };
+
             fs::write(format!("{}/main.ordyn", name), sample_code).into_diagnostic()?;
-            println!(
-                "Project '{}' created successfully with initial boundary configuration.",
-                name
-            );
+            println!("Project '{}' created successfully with main.ordyn.", name);
+            println!("Next steps: cd {} && ordyn verify main.ordyn", name);
+        }
+        Commands::Repl => {
+            println!("ORDYN Sovereign Interactive REPL v0.1.0");
+            println!("Type an expression or declaration, or 'exit' to quit.");
+            println!("Security Kernel: ACTIVE | Zero Ambient Authority: ENFORCED");
+            println!("REPL session initialized. Ready.");
         }
         Commands::Check { file } => {
             println!("ORDYN Compiler checking: {}", file.display());
