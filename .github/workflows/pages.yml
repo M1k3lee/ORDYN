@@ -3,35 +3,28 @@ name: Deploy ORDYN Challenge Demo to GitHub Pages
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'demo/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: "pages-deploy"
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    name: Deploy Demo to gh-pages Branch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Demo Artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy Demo to GitHub Pages Branch
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: 'demo'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          folder: demo
+          branch: gh-pages
