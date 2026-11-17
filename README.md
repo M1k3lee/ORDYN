@@ -228,6 +228,12 @@ flow AuditPipeline(entry: String) -> Unit with [StorageWrite] {
 
 ---
 
+## 🏛️ Origins & Leadership
+
+ORDYN was conceived, architected, and founded by **Michael Wady** (*aka M1k3*) to establish a sovereign, security-first foundation for computing where security is an intrinsic mathematical property of the compiler and runtime rather than an optional afterthought.
+
+---
+
 ## 📜 License
 
 Dual-licensed under either:
