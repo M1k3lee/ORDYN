@@ -19,6 +19,7 @@ members = [
     "crates/ordyn-prover",
     "crates/ordyn-ffi",
     "crates/ordyn-orbit",
+    "crates/ordyn-wit",
 ]
 resolver = "2"
 

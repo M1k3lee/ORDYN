@@ -15,7 +15,15 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg" alt="License" /></a>
   <a href="docs/development/IMPLEMENTATION_STATUS.md"><img src="https://img.shields.io/badge/status-active%20development-emerald.svg" alt="Status" /></a>
   <a href="https://m1k3lee.github.io/ORDYN/"><img src="https://img.shields.io/badge/Live%20Demo-Hack%20The%20Vault-red.svg" alt="Live Demo" /></a>
+  <a href="https://m1k3lee.github.io/ORDYN/studio/"><img src="https://img.shields.io/badge/Live%20Studio-Web%20IDE%20%26%20Prover-purple.svg" alt="Live Studio" /></a>
 </p>
+
+---
+
+## 🎨 Interactive Live Online Tools
+
+- 🎮 **[Hack the Sovereign Vault CTF Challenge](https://m1k3lee.github.io/ORDYN/)**: Launch real exploit payloads directly against the browser-compiled WebAssembly Security Kernel.
+- 🛡️ **[ORDYN Sovereign Studio](https://m1k3lee.github.io/ORDYN/studio/)**: Interactive Web IDE with real-time capability DAG rendering, SMT-LIB2 contract prover inspector, and Red-Lab exploit arena.
 
 ---
 

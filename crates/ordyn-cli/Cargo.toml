@@ -22,6 +22,7 @@ ordyn-runtime = { path = "../ordyn-runtime" }
 ordyn-forge = { path = "../ordyn-forge" }
 ordyn-visual = { path = "../ordyn-visual" }
 ordyn-prover = { path = "../ordyn-prover" }
+ordyn-wit = { path = "../ordyn-wit" }
 clap.workspace = true
 miette.workspace = true
 thiserror.workspace = true

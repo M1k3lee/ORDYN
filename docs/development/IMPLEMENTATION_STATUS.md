@@ -36,18 +36,23 @@
 | **Cloud Microservices**| Orbit Framework (`ordyn-orbit`)| Implemented | 3 unit tests passing | Tested | Zero-trust routes, boundary confinement, rate limiting |
 | **WebAssembly Engine** | Browser Runtime (`ordyn-wasm`)| Implemented | In-browser C-ABI exports | Tested | Web playground compiler and live attack executor |
 | **Red Lab Validation**| Adversarial Tests (`ordyn-red-lab`)| Implemented | 7 unit tests passing | Tested | Forgery, widening, egress, invariant traps, Log4j, Heartbleed, supply-chain theft |
-| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `package`, `inspect`, `visual`, `new` |
+| **Component Model** | WASM WIT Generator (`ordyn-wit`)| Implemented | 1 unit test passing | Tested | WASI Preview 2 Component Model `.wit` emitter |
+| **CLI Tooling** | `ordyn` CLI (`ordyn-cli`)| Implemented | Verified on canonical example | Tested | `check`, `verify`, `build`, `run`, `package`, `inspect`, `visual`, `wit`, `add`, `lock`, `publish`, `studio`, `new` |
 | **Editor Integration** | VS Code Extension (`editors/code`)| Implemented | Syntax & configuration ready | Integrated | TextMate grammar, language config, package manifest |
+| **Universal Grammar** | Tree-sitter Grammar (`tree-sitter-ordyn`)| Implemented | Complete grammar & highlights | Integrated | Tree-sitter parser definition for Neovim/Zed/Helix |
+| **Sovereign Studio** | Web IDE & Simulator (`studio/`)| Implemented | Deployed to GitHub Pages | Tested | Live DAG visualizer, SMT prover, Red-Lab arena |
 | **Continuous Integration** | GitHub Actions (`.github/workflows/ci.yml`)| Implemented | Multi-platform matrix | Configured | Linux, macOS, Windows CI with fmt, clippy, test |
 | **Applications** | Secure Banking Service | Implemented | End-to-end verified | Tested | `examples/secure_banking_service.ordyn` |
+| **Applications** | Orbit Cloud Payment Service | Implemented | End-to-end verified | Tested | `examples/orbit_payment_service.ordyn` |
 
 ---
 
-## 2. Test Evidence Log (44 Automated Tests Passing)
+## 2. Test Evidence Log (45 Automated Tests Passing)
 
 - `ordyn_lexer::tests::test_lex_basic_tokens`: PASSED
 - `ordyn_lexer::tests::test_lex_keywords_and_symbols`: PASSED
 - `ordyn_lexer::tests::test_unterminated_string_error`: PASSED
+- `ordyn_wit::tests::test_wit_generation_from_ordyn_program`: PASSED
 - `ordyn_parser::tests::test_parse_entity_and_contracts`: PASSED
 - `ordyn_parser::tests::test_parse_all_six_constructs`: PASSED
 - `ordyn_parser::tests::language_tests::test_canonical_example_parses_completely`: PASSED
