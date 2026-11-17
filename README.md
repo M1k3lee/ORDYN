@@ -14,18 +14,20 @@
   <a href="https://github.com/M1k3lee/ORDYN/actions"><img src="https://github.com/M1k3lee/ORDYN/workflows/CI/badge.svg" alt="CI Status" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT-blue.svg" alt="License" /></a>
   <a href="docs/development/IMPLEMENTATION_STATUS.md"><img src="https://img.shields.io/badge/status-active%20development-emerald.svg" alt="Status" /></a>
-  <a href="https://m1k3lee.github.io/ORDYN/"><img src="https://img.shields.io/badge/Live%20Demo-Hack%20The%20Vault-red.svg" alt="Live Demo" /></a>
+  <a href="https://m1k3lee.github.io/ORDYN/"><img src="https://img.shields.io/badge/Home%20Portal-Sovereign%20Computing-gold.svg" alt="Official Portal" /></a>
   <a href="https://m1k3lee.github.io/ORDYN/studio/"><img src="https://img.shields.io/badge/Live%20Studio-Web%20IDE%20%26%20Prover-purple.svg" alt="Live Studio" /></a>
+  <a href="https://m1k3lee.github.io/ORDYN/arena/"><img src="https://img.shields.io/badge/CTF%20Arena-Hack%20The%20Vault-crimson.svg" alt="CTF Arena" /></a>
 </p>
 
 ---
 
-## 🎨 Interactive Live Online Tools
+## 🏛️ Interactive Live Online Tools & Ecosystem
 
 Experience the ORDYN ecosystem directly in your browser with zero installation:
 
-- 🎮 **[Hack the Sovereign Vault CTF Challenge](https://m1k3lee.github.io/ORDYN/)**: An interactive security challenge where you launch real exploit payloads (Capability Forgery, Lattice Widening, Contract Underflows, SSRF Egress) directly against the WebAssembly-compiled Security Kernel.
+- 🏛️ **[Official Sovereign Home & Vibe-Coding Portal](https://m1k3lee.github.io/ORDYN/)**: The flagship architectural portal featuring live WebAssembly verification, interactive tutorials for AI vibe coders and systems engineers, and the complete 6 foundational constructs breakdown.
 - 🛡️ **[ORDYN Sovereign Studio](https://m1k3lee.github.io/ORDYN/studio/)**: An interactive in-browser IDE with live architectural DAG synthesis, SMT-LIB2 contract prover inspector, and Red-Lab exploit arena.
+- ⚡ **[Hack the Sovereign Vault CTF Challenge](https://m1k3lee.github.io/ORDYN/arena/)**: An interactive zero-day security challenge where you launch real exploit payloads (Capability Forgery, Lattice Widening, Contract Underflows, SSRF Egress) directly against the WebAssembly-compiled Security Kernel.
 
 ---
 
