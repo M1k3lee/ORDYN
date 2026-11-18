@@ -950,6 +950,7 @@
             </a>
             <div class="nav-items">
                 <a href="#foundations" class="nav-item">Architecture</a>
+                <a href="./security/" class="nav-item" style="color: var(--ordyn-blue); font-weight: 600;">Threat Model</a>
                 <a href="#vibe-coding" class="nav-item">AI Vibe Coding</a>
                 <a href="#workshop" class="nav-item">Live Workshop</a>
                 <a href="#constructs" class="nav-item">Constructs</a>
@@ -1074,6 +1075,65 @@
                         Functions are pure by default. Side effects must be explicitly annotated with `with [Effect]`. Covert exfiltration attacks are stopped at compile time.
                     </p>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real-World Threat Post-Mortem Teaser Section -->
+    <section class="threat-teaser-section" style="background: #ffffff; padding: 80px 24px; border-top: 1px solid var(--border-subtle);">
+        <div class="section-container">
+            <span class="section-tagline">Real-World Security Post-Mortem</span>
+            <h2 class="section-title">Could Log4j, Equifax, or Bank Breaches Happen on ORDYN?</h2>
+            <p class="section-desc">
+                An honest analysis: No programming language can prevent human phishing or cloud misconfigurations. But 60% to 70% of high-severity enterprise breaches stem from software-layer flaws that ORDYN mathematically eliminates.
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 36px;">
+                <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-family: var(--font-code); font-size: 11px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 3px 8px; border-radius: 4px;">CVE-2021-44228</span>
+                            <span style="font-family: var(--font-code); font-size: 11px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 3px 8px; border-radius: 4px;">BLOCKED</span>
+                        </div>
+                        <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ordyn-navy); margin-bottom: 8px;">Log4j Outbound Exfiltration</h4>
+                        <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.55;">
+                            In Java, an innocent logging library made an outbound LDAP socket call. In ORDYN, logging has zero ambient network capability—the compiler halts compilation immediately with an <code>UnhandledEffect</code> error.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-family: var(--font-code); font-size: 11px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 3px 8px; border-radius: 4px;">FINANCIAL UNDERFLOWS</span>
+                            <span style="font-family: var(--font-code); font-size: 11px; font-weight: 700; color: #059669; background: #ecfdf5; padding: 3px 8px; border-radius: 4px;">SMT-PROVEN</span>
+                        </div>
+                        <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ordyn-navy); margin-bottom: 8px;">Banking &amp; Ledger Double-Spend</h4>
+                        <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.55;">
+                            Standard languages allow negative balance withdrawals if async locks or checks slip. ORDYN's Presburger SMT solver proves <code>requires</code> and <code>ensures</code> contracts at compile time.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-family: var(--font-code); font-size: 11px; font-weight: 700; color: #b91c1c; background: #fee2e2; padding: 3px 8px; border-radius: 4px;">LATERAL MOVEMENT</span>
+                            <span style="font-family: var(--font-code); font-size: 11px; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 3px 8px; border-radius: 4px;">CONTAINED</span>
+                        </div>
+                        <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--ordyn-navy); margin-bottom: 8px;">Supply-Chain &amp; Enclave Escape</h4>
+                        <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.55;">
+                            Even if an attacker finds an application zero-day, monotonic capability attenuation traps them in an isolated WebAssembly cell. Lateral movement to database secrets is severed.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="./security/" style="display: inline-flex; align-items: center; gap: 8px; background: var(--ordyn-navy); color: #ffffff; font-weight: 700; font-size: 14.5px; padding: 12px 28px; border-radius: 8px; text-decoration: none; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);">
+                    <span>Read the Full Threat Model &amp; Enterprise Whitepaper</span>
+                    <span>→</span>
+                </a>
             </div>
         </div>
     </section>
@@ -1356,6 +1416,7 @@
                     <ul>
                         <li><a href="./studio/">Sovereign Studio IDE</a></li>
                         <li><a href="./arena/">Zero-Day CTF Arena</a></li>
+                        <li><a href="./security/">Threat Model Whitepaper</a></li>
                         <li><a href="#workshop">Interactive Workshop</a></li>
                         <li><a href="#install">Installation</a></li>
                     </ul>
