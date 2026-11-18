@@ -27,6 +27,7 @@ Experience the ORDYN ecosystem directly in your browser with zero installation:
 
 - 🏛️ **[Official Sovereign Home & Vibe-Coding Portal](https://m1k3lee.github.io/ORDYN/)**: The flagship architectural portal featuring live WebAssembly verification, interactive tutorials for AI vibe coders and systems engineers, and the complete 6 foundational constructs breakdown.
 - 🛡️ **[An Honest Threat Model: Enterprise Breach Analysis](https://m1k3lee.github.io/ORDYN/security/)**: A rigorous architectural whitepaper detailing how ORDYN defends against real-world enterprise breaches (Log4j, Equifax, supply-chain poisoning, ledger underflows), blast-radius containment, and transparent boundaries.
+- 📖 **[Developer Experience Guide: Building Webapps](https://m1k3lee.github.io/ORDYN/dx/)**: An honest teardown on building webapps in ORDYN—why 60 seconds of upfront boundary declaration enables fearless refactoring and 10x more reliable AI vibe-coding.
 - 💻 **[ORDYN Sovereign Studio](https://m1k3lee.github.io/ORDYN/studio/)**: An interactive in-browser IDE with live architectural DAG synthesis, SMT-LIB2 contract prover inspector, and Red-Lab exploit arena.
 - ⚡ **[Hack the Sovereign Vault CTF Challenge](https://m1k3lee.github.io/ORDYN/arena/)**: An interactive zero-day security challenge where you launch real exploit payloads (Capability Forgery, Lattice Widening, Contract Underflows, SSRF Egress) directly against the WebAssembly-compiled Security Kernel.
 
