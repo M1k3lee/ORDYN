@@ -450,89 +450,86 @@
     <article class="article-wrap">
 
         <div class="article-header">
-            <span class="doc-tag">Developer Experience &bull; Web Architecture</span>
-            <h1 class="article-title">Building Web Applications in ORDYN: Is It More Complicated?</h1>
+            <span class="doc-tag">Developer Experience &bull; Web Engineering</span>
+            <h1 class="article-title">Building Web Applications in ORDYN: The Reality Behind the Guardrails</h1>
             <p class="article-lead">
-                When developers hear "formal verification" and "capability security," their first instinct is fear: <em>Will building features take 10x longer? Will making changes feel like walking through concrete?</em> Here is the honest teardown.
+                Whenever backend engineers hear "compile-time SMT solver" and "capability-based security," their immediate reaction is skepticism: <em>Is this another academic language where writing a simple REST endpoint takes three days and four PhDs?</em> Here is an honest breakdown of what building and maintaining webapps in ORDYN actually looks like.
             </p>
             <div class="meta-bar">
-                <span>By The ORDYN Core Team</span>
+                <span>By The ORDYN Engineering Group</span>
                 <span>&bull;</span>
-                <span>Reading Time: 8 min</span>
+                <span>8 min read</span>
                 <span>&bull;</span>
-                <span>Focus: DX &amp; Web Engineering</span>
+                <span>Language Specification v0.1.0</span>
             </div>
         </div>
 
         <!-- Summary TL;DR -->
         <div class="summary-card">
-            <div class="summary-title">The Honest 60-Second Verdict</div>
+            <div class="summary-title">The Engineering Trade-Off in 30 Seconds</div>
             <p>
-                <strong>The first 5 minutes</strong>: Requires about <strong>10% more upfront thought</strong> than an ad-hoc Express or Flask script. You don't just call database queries or outbound APIs anywhere; you explicitly declare what your web route is permitted to touch (its <code>boundary</code>).
+                <strong>The first 5 minutes</strong>: Requires about <strong>30 to 60 seconds of upfront declaration</strong> that you skip in Express or Flask. You don't scatter database writes or outbound fetches across utility helpers; you explicitly declare what your route handler is permitted to touch in a <code>boundary</code> block.
             </p>
             <p>
-                <strong>Day 2 to Year 5 (Refactoring, Scaling &amp; AI Vibe-Coding)</strong>: It is <strong>significantly easier, faster, and less stressful</strong> than Node.js, Python, or Rust. Pure-by-default execution eliminates hidden side effects, and SMT contracts verify business logic before code ever reaches production.
+                <strong>Day 2 through Year 5 (Refactoring, Scaling, and AI code generation)</strong>: Maintenance is <strong>far less stressful and significantly faster</strong> than in Node.js, Python, or Go. Pure-by-default execution eliminates hidden side effects, and Presburger arithmetic proves ledger math and bounds checks before code ever hits production.
             </p>
         </div>
 
         <!-- Section 1 -->
-        <h2 class="section-heading">1. Why Making Changes in Legacy Web Stacks Is Terrifying</h2>
+        <h2 class="section-heading">1. Where Unbounded Web Stacks Fall Apart</h2>
         <p class="prose">
-            In Node.js, Python, or Go, building the first prototype is fast because there are no boundaries. But as soon as the webapp reaches production, maintenance becomes painful:
+            In Node.js, Python, or Go, writing the initial prototype feels effortless because there are zero guardrails. But once a codebase grows past 10,000 lines and multiple engineers (or AI assistants) start contributing, hidden friction accumulates rapidly:
         </p>
 
         <div class="feature-block">
             <div class="feature-block-title">
-                <span>👻</span>
-                <span>1. Spooky Action at a Distance (Hidden Side Effects)</span>
+                <span>1. Hidden Side Effects in Shared Utilities</span>
             </div>
             <p>
-                In JavaScript or Python, any utility function can secretly query the database, mutate global state, or read environment keys. When you edit a helper function 6 months later, you have no compiler guarantee that it won't break an unrelated authentication check or trigger a race condition.
+                In standard web frameworks, any helper function can secretly touch the database, mutate global process memory, or read environment keys. When you refactor a string-cleaning utility six months later, you have no compiler guarantee that it won't break an unrelated session validator or trigger an unhandled race condition.
             </p>
         </div>
 
         <div class="feature-block">
             <div class="feature-block-title">
-                <span>🎲</span>
-                <span>2. The Dependency Roulette Wheel</span>
+                <span>2. The Transitive Dependency Burden</span>
             </div>
             <p>
-                The average modern webapp pulls in over 1,000 open-source packages via npm or pip. Upgrading a package to patch a bug means praying the new version didn't introduce a memory leak or a supply-chain exfiltration backdoor.
+                A standard web service imports hundreds of transitive dependencies via npm or pip. Upgrading a minor version to patch a CVE means hoping the updated package didn't introduce memory leaks, undocumented network requests, or malicious keylogger hooks.
             </p>
         </div>
 
         <div class="feature-block">
             <div class="feature-block-title">
-                <span>⚠️</span>
-                <span>3. The AI Vibe-Coding Tax</span>
+                <span>3. The LLM Review Dilemma</span>
             </div>
             <p>
-                When you use AI coding assistants (Claude Code, Cursor) with legacy languages, the AI frequently writes code that looks plausible but contains subtle underflow bugs, unchecked edge cases, or runaway loops that only crash under heavy user load.
+                When using AI assistants (Claude Code, Cursor) in Python or TypeScript, the model frequently generates code that looks completely idiomatic on the surface, but contains subtle concurrency underflows, missing boundary checks, or unhandled null branches that only surface under production concurrency.
             </p>
         </div>
 
         <!-- Section 2 -->
-        <h2 class="section-heading">2. How ORDYN Transforms Day-to-Day Maintenance</h2>
+        <h2 class="section-heading">2. How ORDYN Changes Daily Maintenance</h2>
 
         <h3 class="sub-heading">Fearless Refactoring via Pure-by-Default Functions</h3>
         <p class="prose">
-            In ORDYN, every function is <strong>pure by default</strong>. Unless a function explicitly declares <code>with [StorageWrite]</code> or <code>with [NetworkGateway]</code>, the compiler guarantees with 100% mathematical certainty that it cannot touch the database or file system.
+            In ORDYN, every function is <strong>pure by default</strong>. Unless a function explicitly declares an effect in its signature (such as <code>with [StorageWrite]</code> or <code>with [Net]</code>), the compiler guarantees that it cannot touch databases, file systems, or sockets.
         </p>
         <p class="prose">
-            You can refactor, rename, or optimize complex business logic without worrying about hidden side effects. If it compiles, the caller's state remains intact.
-        </p>
-
-        <h3 class="sub-heading">10x More Reliable AI Vibe-Coding</h3>
-        <p class="prose">
-            When you prompt Claude Code or Cursor to build an ORDYN endpoint, the AI includes <code>requires</code> (preconditions) and <code>ensures</code> (postconditions) contracts. 
-        </p>
-        <p class="prose">
-            If the AI hallucinates logic that could allow a negative balance or an index out-of-bounds, the <strong>Presburger SMT solver catches it immediately at compile time</strong>. The AI gets instant mathematical feedback and corrects itself in 1 turn before you ever deploy to staging.
+            You can refactor, extract, or rewrite business logic with complete confidence. If the refactored code compiles, you know with mathematical certainty that you did not introduce hidden I/O side effects into the caller's pipeline.
         </p>
 
-        <h3 class="sub-heading">Instant Package Audits with Capability Diffing</h3>
+        <h3 class="sub-heading">Why LLMs Write More Reliable Code in ORDYN</h3>
         <p class="prose">
-            When you upgrade a dependency in ORDYN, <code>ordyn-forge</code> compares the required capabilities:
+            When you ask an AI coding assistant to implement an ORDYN service, the language syntax encourages explicit <code>requires</code> (preconditions) and <code>ensures</code> (postconditions) contracts. 
+        </p>
+        <p class="prose">
+            If the AI writes logic with an off-by-one error or an arithmetic condition that could allow a negative balance under specific inputs, the <strong>Presburger SMT solver catches it immediately at compile time</strong>. The compiler outputs a concrete mathematical refutation, giving the LLM the exact counterexample it needs to self-correct on turn one—before any human engineer has to review it.
+        </p>
+
+        <h3 class="sub-heading">Deterministic Dependency Audits</h3>
+        <p class="prose">
+            When you update a dependency in ORDYN, the package manager (<code>ordyn-forge</code>) checks the capability delta across versions:
         </p>
         <pre style="background: #0f172a; color: #f8fafc; font-family: var(--font-code); font-size: 13px; padding: 16px; border-radius: 6px; margin: 16px 0;"><code>[forge] Updating dependency 'stripe-webhook' v1.2.0 -> v1.3.0
 [BLOCKED] Authority Escalation Detected!
@@ -542,7 +539,7 @@ The package update attempted to widen ambient authority. Build aborted.</code></
         <!-- Section 3: Code Comparison -->
         <h2 class="section-heading">3. Side-by-Side: Building an API Endpoint</h2>
         <p class="prose">
-            Notice how clean and readable ORDYN code actually is. It looks and feels like modern TypeScript or Rust, but with built-in mathematical boundaries.
+            Notice how straightforward ORDYN code looks in practice. The syntax is familiar to anyone who knows TypeScript, Rust, or Swift, but with explicit architectural boundaries:
         </p>
 
         <div class="code-split">
@@ -550,23 +547,23 @@ The package update attempted to widen ambient authority. Build aborted.</code></
             <div class="code-panel">
                 <div class="code-header header-trad">
                     <span>Traditional Node.js / Express</span>
-                    <span>No Guardrails</span>
+                    <span>Implicit Ambient Access</span>
                 </div>
                 <pre><code>// Express Route
 app.post("/withdraw", async (req, res) => {
     const { amount } = req.body;
     
-    // Developer must remember manual check:
+    // Developer must manually remember checks:
     if (amount <= 0 || amount > user.balance) {
         return res.status(400).send("Invalid");
     }
 
-    // Race condition / underflow risk:
+    // Vulnerable to async race conditions / underflow:
     user.balance -= amount;
     await db.save(user);
 
-    // Any imported logger here can 
-    // secretly exfiltrate tokens!
+    // Any imported logger here has ambient 
+    // network rights to exfiltrate tokens:
     logger.info("Withdrawal complete");
     res.json({ balance: user.balance });
 });</code></pre>
@@ -575,10 +572,10 @@ app.post("/withdraw", async (req, res) => {
             <!-- ORDYN -->
             <div class="code-panel">
                 <div class="code-header header-ordyn">
-                    <span>ORDYN Sovereign Service</span>
-                    <span>SMT-Proven Sound</span>
+                    <span>ORDYN Service</span>
+                    <span>Presburger SMT Verified</span>
                 </div>
-                <pre><code>// ORDYN Orbit Service
+                <pre><code>// ORDYN Domain Service
 entity AccountService {
     mut balance: Int;
 
@@ -591,7 +588,7 @@ entity AccountService {
     }
 }
 
-// Clean Architectural Boundary
+// Explicit Architectural Boundary
 boundary WithdrawRoute {
     grant StorageWrite { path: "db/accounts" };
     quota { memory_limit: 64; fuel_limit: 100000; }
@@ -601,7 +598,7 @@ boundary WithdrawRoute {
         </div>
 
         <!-- Section 4: Summary Table -->
-        <h2 class="section-heading">4. The Direct Comparison</h2>
+        <h2 class="section-heading">4. Pragmatic Comparison: Day 1 vs. Day 300</h2>
 
         <div class="table-wrap">
             <table class="dx-table">
@@ -615,59 +612,54 @@ boundary WithdrawRoute {
                 <tbody>
                     <tr class="highlight">
                         <td><strong>Initial 10-line prototype</strong></td>
-                        <td>⚡ 1 minute (Fast, but fragile)</td>
-                        <td>⏳ 2 minutes (Requires boundary declaration)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Adding new features</strong></td>
-                        <td>Fast initially, but technical debt builds</td>
-                        <td>Clean, modular, self-documenting</td>
+                        <td>Fast (1 minute, zero boundaries)</td>
+                        <td>Requires boundary block (2 minutes)</td>
                     </tr>
                     <tr>
                         <td><strong>Refactoring 10,000+ lines</strong></td>
-                        <td>😰 High anxiety (Hidden side effects break)</td>
-                        <td>😌 Zero fear (Pure functions prove safety)</td>
+                        <td>Requires extensive regression tests to catch hidden side effects</td>
+                        <td>Compiler guarantees function purity and effect containment</td>
                     </tr>
                     <tr>
-                        <td><strong>Vibe-coding with Claude / Cursor</strong></td>
-                        <td>⚠️ AI hallucinates subtle bugs &amp; leaks</td>
-                        <td>🛡️ SMT compiler traps AI errors before runtime</td>
+                        <td><strong>AI Code Generation (Cursor / Claude)</strong></td>
+                        <td>LLM can hallucinate subtle underflows and unchecked branches</td>
+                        <td>SMT solver traps arithmetic errors with counterexamples</td>
                     </tr>
                     <tr>
-                        <td><strong>Updating dependencies</strong></td>
-                        <td>🎲 Blind trust on npm/pip supply chain</td>
-                        <td>🔍 Instant automated capability diff report</td>
+                        <td><strong>Upgrading open-source packages</strong></td>
+                        <td>Trusting upstream authors not to add hidden network or disk calls</td>
+                        <td>Automated capability diffing halts unexpected authority widenings</td>
                     </tr>
                     <tr>
-                        <td><strong>Infinite loops &amp; ReDoS</strong></td>
-                        <td>🔥 Node process hangs; server crashes</td>
-                        <td>⏱️ Fuel Governor halts execution deterministically</td>
+                        <td><strong>Runaway loops &amp; ReDoS</strong></td>
+                        <td>Event loop hangs, taking down container worker</td>
+                        <td>Fuel Governor halts task deterministically at quota exhaustion</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <!-- Section 5: Conclusion -->
-        <h2 class="section-heading">5. The Verdict for Developers &amp; Teams</h2>
+        <h2 class="section-heading">5. The Verdict for Backend Engineers</h2>
         <p class="prose">
-            Is ORDYN more complicated to build with? 
+            Does building web services in ORDYN take longer?
         </p>
         <p class="prose">
-            <strong>Only for the first 60 seconds</strong>, because it asks you one simple architectural question: <em>"What should this web module be allowed to access?"</em>
+            <strong>Only for the first 60 seconds of a new file</strong>, because you explicitly state what the component is allowed to touch: <code>grant StorageWrite</code>, <code>quota fuel_limit</code>.
         </p>
         <p class="prose">
-            Once you answer that question, every subsequent refactor, AI code generation turn, and package update is orders of magnitude safer and faster. You spend your time shipping features, not debugging midnight production panics or auditing compromised dependencies.
+            From that point forward, every refactor, AI generation turn, and dependency upgrade is vastly easier to reason about. You spend your engineering hours shipping features, rather than diagnosing silent race conditions or auditing compromised dependencies.
         </p>
 
         <!-- CTA Box -->
         <div class="cta-box">
-            <div class="cta-title">Try Building an ORDYN Web Service Now</div>
+            <div class="cta-title">Try Writing an ORDYN Service in the Browser</div>
             <p class="cta-desc">
-                Write, verify, and compile live ORDYN code directly in your browser with zero installation.
+                Write, verify, and compile ORDYN code directly in your browser with zero installation.
             </p>
             <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-                <a href="../studio/" class="btn-cta">🏛️ Open Sovereign Studio IDE</a>
-                <a href="../security/" class="btn-cta" style="background: transparent; border: 1px solid #475569;">🛡️ Read Enterprise Threat Model</a>
+                <a href="../studio/" class="btn-cta">Open Web Studio IDE</a>
+                <a href="../security/" class="btn-cta" style="background: transparent; border: 1px solid #475569;">Read Threat Model Whitepaper</a>
             </div>
         </div>
 
