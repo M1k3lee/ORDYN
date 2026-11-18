@@ -1010,7 +1010,7 @@
                 Verified by proof.
             </h1>
             <p class="hero-description">
-                ORDYN is an open-source, security-first programming language built to eliminate ambient authority leaks, runtime contract underflows, and AI agent hallucinations through compile-time SMT proof.
+                ORDYN is an open-source programming language engineered with zero ambient authority, compile-time Presburger SMT contract proofs, and deterministic fuel quotas. Untrusted dependencies and AI-generated code cannot secretly open sockets or leak secrets.
             </p>
             <div class="hero-cta-row">
                 <a href="#install" class="btn-main-cta">
@@ -1176,25 +1176,25 @@
         <div class="section-container">
             <div class="vibe-split">
                 <div>
-                    <span class="section-tagline">The AI Frontier</span>
-                    <h2 class="section-title">Built for the AI Era: Why Vibe Coders Need ORDYN</h2>
+                    <span class="section-tagline">AI Code Generation</span>
+                    <h2 class="section-title">Why AI Assistants Generate Better Code in ORDYN</h2>
                     <p class="section-desc" style="margin-bottom: 24px;">
-                        When building software with Claude Code, Cursor, or Copilot, the AI can hallucinate business rules or leak ambient secrets. ORDYN provides compiler-level guardrails.
+                        When using Claude Code, Cursor, or Copilot in Python or JavaScript, models often write plausible code with subtle edge-case flaws: off-by-one errors, missing arithmetic bounds, or unauthorized ambient imports. ORDYN turns the compiler into a strict verification partner.
                     </p>
 
                     <div class="vibe-points">
                         <div class="vibe-point">
-                            <span class="vibe-point-icon">🔒</span>
+                            <span class="vibe-point-icon">🛡️</span>
                             <div>
-                                <div class="vibe-point-title">Supply-Chain &amp; Prompt Injection Immunity</div>
-                                <div class="vibe-point-desc">Even if a compromised LLM generates malicious code, it cannot call outbound sockets or touch credentials without an explicit capability grant.</div>
+                                <div class="vibe-point-title">Mathematical Counterexamples for LLMs</div>
+                                <div class="vibe-point-desc">When an LLM writes code that violates an invariant, the Presburger solver returns a concrete counterexample. The model reads the compiler diagnostic and corrects itself immediately.</div>
                             </div>
                         </div>
                         <div class="vibe-point">
-                            <span class="vibe-point-icon">⏱️</span>
+                            <span class="vibe-point-icon">⚡</span>
                             <div>
-                                <div class="vibe-point-title">Infinite Loop Neutralization</div>
-                                <div class="vibe-point-desc">AI-generated `while` loops are bounded by the Fuel Governor. Runaway cycles trap safely instead of hanging your servers.</div>
+                                <div class="vibe-point-title">Deterministic Fuel Quotas</div>
+                                <div class="vibe-point-desc">AI-generated `while` loops and recursion paths are bound to execution fuel budgets (`fuel_limit`). Runaway loops are trapped cleanly instead of locking up server threads.</div>
                             </div>
                         </div>
                     </div>
@@ -1219,8 +1219,8 @@
             <div style="margin-top: 36px; background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
                 <div>
                     <span style="font-family: var(--font-code); font-size: 11.5px; font-weight: 700; color: var(--ordyn-emerald); text-transform: uppercase;">Developer Experience Guide</span>
-                    <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--ordyn-navy); margin-top: 2px;">Building Web Applications in ORDYN: Is It More Complicated?</h4>
-                    <p style="font-size: 13.5px; color: var(--text-secondary); margin-top: 4px;">An honest teardown comparing Node.js and Python vs ORDYN's upfront boundaries and fearless refactoring.</p>
+                    <h4 style="font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--ordyn-navy); margin-top: 2px;">Building Web Applications in ORDYN: The Reality Behind the Guardrails</h4>
+                    <p style="font-size: 13.5px; color: var(--text-secondary); margin-top: 4px;">An honest analysis comparing Express/FastAPI vs ORDYN's upfront boundaries and fearless refactoring.</p>
                 </div>
                 <a href="./dx/" style="background: var(--ordyn-emerald); color: #ffffff; font-weight: 700; font-size: 13.5px; padding: 10px 20px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;">
                     <span>Read Developer Guide</span>

