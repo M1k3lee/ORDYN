@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ordyn-sandbox"
+version = "0.1.0"
+authors = [
+  { name = "Michael Wady (M1k3) and ORDYN Contributors" },
+]
+description = "Zero-ambient-authority execution and formal SMT verification sandbox for AI agents and untrusted code"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Topic :: Software Development :: Compilers",
+]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://m1k3lee.github.io/ORDYN/"
+"Repository" = "https://github.com/M1k3lee/ORDYN"

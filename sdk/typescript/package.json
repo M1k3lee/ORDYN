@@ -1,0 +1,41 @@
+{
+  "name": "@ordyn/sandbox",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Zero-ambient-authority execution and SMT verification sandbox for AI agents and untrusted code.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "ordyn_wasm.wasm",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "ordyn",
+    "sandbox",
+    "ai-agent",
+    "formal-verification",
+    "smt",
+    "wasm",
+    "security",
+    "zero-trust",
+    "llm-tools"
+  ],
+  "author": "Michael Wady (M1k3) and ORDYN Contributors",
+  "license": "Apache-2.0 OR MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/M1k3lee/ORDYN.git",
+    "directory": "sdk/typescript"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^5.4.0"
+  }
+}

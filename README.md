@@ -35,15 +35,59 @@ Explore the ORDYN ecosystem directly in your browser with zero installation:
 
 ## ⚡ Quickstart in 60 Seconds
 
-### 1. Install the ORDYN Toolchain
-```bash
-# Clone the repository
-git clone https://github.com/M1k3lee/ORDYN.git
-cd ORDYN
+### 1. Install the Unified ORDYN Toolchain
 
-# Install the unified ordyn CLI binary
-cargo install --path crates/ordyn-cli
+**macOS & Linux (One-line installer):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/M1k3lee/ORDYN/main/scripts/install.sh | bash
 ```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/M1k3lee/ORDYN/main/scripts/install.ps1 | iex
+```
+
+**Via Cargo (Rust developers):**
+```bash
+cargo install --git https://github.com/M1k3lee/ORDYN.git ordyn-cli
+```
+
+---
+
+## 🤖 AI Agent Sandboxes (Python & TypeScript SDKs)
+
+Run untrusted AI-generated code with **zero ambient authority**, **formal Presburger SMT contract checks**, and **bounded fuel quotas**:
+
+### TypeScript / Node (`@ordyn/sandbox`)
+```bash
+npm install @ordyn/sandbox
+```
+```typescript
+import { runOrdyn } from '@ordyn/sandbox';
+
+const result = await runOrdyn(untrustedAgentCode, { fuelLimit: 50_000 });
+if (result.success) {
+  console.log(`[PASS in ${result.elapsedUs}µs] Contracts proven sound, zero ambient leaks!`);
+} else {
+  console.error(`[TRAPPED] ${result.errorMessage}`);
+}
+```
+
+### Python (`ordyn-sandbox`)
+```bash
+pip install ordyn-sandbox
+```
+```python
+from ordyn import run_ordyn
+
+result = run_ordyn(untrusted_agent_code, fuel_limit=50_000)
+if result.is_valid:
+    print(f"[PASS in {result.elapsed_us}µs] Contracts proven sound, zero ambient leaks!")
+else:
+    print(f"[TRAPPED] {result.error_message}")
+```
+
+---
 
 ### 2. Scaffold a New Project
 Choose from pre-configured production templates:
