@@ -364,6 +364,48 @@
             color: var(--text-muted);
             line-height: 1.4;
         }
+
+        /* Mobile & Tablet Responsive Layout */
+        @media (max-width: 900px) {
+            header {
+                padding: 10px 14px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .header-badges {
+                display: none;
+            }
+            .brand-title {
+                font-size: 16px;
+            }
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+            }
+            .workspace-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+                overflow: visible;
+            }
+            .editor-pane {
+                min-height: 420px;
+                border-right: none;
+                border-bottom: 2px solid var(--border-subtle);
+            }
+            textarea#source-editor {
+                min-height: 360px;
+                font-size: 12.5px;
+            }
+            .inspector-pane {
+                min-height: 500px;
+            }
+            .pipeline-tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 12px;
+            }
+        }
     </style>
 </head>
 <body>
