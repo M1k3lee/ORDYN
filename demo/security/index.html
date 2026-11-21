@@ -5,6 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>An Honest Threat Model | ORDYN Security Whitepaper</title>
     <meta name="description" content="A rigorous, honest architectural threat analysis examining how the ORDYN programming language defends against real-world enterprise breaches, supply-chain attacks, and logic bugs.">
+    <meta name="keywords" content="ORDYN threat model, secure programming language, Log4j prevention, zero ambient authority, software security whitepaper, industrial SCADA security, memory safety, capability security">
+    <link rel="canonical" href="https://m1k3lee.github.io/ORDYN/security/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://m1k3lee.github.io/ORDYN/security/">
+    <meta property="og:title" content="What ORDYN Actually Stops: A Real-World Breach Post-Mortem">
+    <meta property="og:description" content="An honest engineering breakdown of how ORDYN neutralizes Log4j, supply-chain attacks, financial underflows, and industrial infrastructure breaches.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/M1k3lee/ORDYN/main/assets/ordyn-banner-dark.png">
+
+    <!-- JSON-LD TechArticle -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "What ORDYN Actually Stops: A Real-World Breach Post-Mortem",
+      "description": "An honest engineering breakdown of how ORDYN neutralizes Log4j, supply-chain attacks, financial underflows, and industrial infrastructure breaches.",
+      "author": {
+        "@type": "Person",
+        "name": "Michael Wady",
+        "url": "https://github.com/M1k3lee"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "ORDYN",
+        "url": "https://m1k3lee.github.io/ORDYN/"
+      },
+      "mainEntityOfPage": "https://m1k3lee.github.io/ORDYN/security/",
+      "datePublished": "2026-11-21"
+    }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -33,6 +64,11 @@
             --font-display: 'Plus Jakarta Sans', -apple-system, sans-serif;
             --font-sans: 'Inter', -apple-system, sans-serif;
             --font-code: 'JetBrains Mono', monospace;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
         }
 
         * {
@@ -482,9 +518,19 @@
         }
 
         @media (max-width: 768px) {
-            .article-title { font-size: 32px; }
+            .header-inner { padding: 10px 16px; }
+            .header-nav .nav-link { display: none; }
+            .btn-portal { padding: 5px 10px; font-size: 12px; }
+            .article-wrap { padding: 32px 16px 64px; }
+            .article-title { font-size: clamp(26px, 7vw, 36px); letter-spacing: -0.5px; }
+            .article-lead { font-size: 16px; }
+            .exec-summary-box { padding: 20px 16px; }
+            .meta-bar { flex-wrap: wrap; gap: 8px; font-size: 12px; }
             .code-split { grid-template-columns: 1fr; }
-            .exec-stats-grid { grid-template-columns: 1fr; }
+            .exec-stats-grid { grid-template-columns: 1fr; gap: 14px; }
+            .cta-box { padding: 24px 16px; }
+            .cta-title { font-size: 20px; }
+            pre { overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 12px; }
         }
     </style>
 </head>
@@ -661,18 +707,49 @@ pub fn log_event(input: String) with [] {
             </div>
         </div>
 
+        <!-- Case 4: Industrial Control & Infrastructure Security -->
+        <div class="case-card">
+            <div class="case-card-header">
+                <div class="case-title">
+                    <span>4. Critical Infrastructure: Supermarket Refrigeration Management</span>
+                </div>
+                <span class="case-verdict-badge badge-eliminated">Compromise Contained</span>
+            </div>
+            <div class="case-body">
+                <p class="case-text">
+                    <strong>The Real-World Scenario:</strong> An enterprise manages 150 commercial refrigeration units across nationwide supermarket branches. An external attacker gains full remote code execution inside the central web dashboard component via a zero-day web vulnerability.
+                </p>
+                <p class="case-text">
+                    <strong>What the Attacker Attempts vs What ORDYN Enforces:</strong>
+                </p>
+                <ul style="margin-left: 20px; color: var(--text-secondary); margin-bottom: 16px; font-size: 14.5px; line-height: 1.65;">
+                    <li><strong>Attempt 1: Issue direct compressor shutdown / heating commands:</strong> <span style="color:#059669; font-weight:700;">BLOCKED.</span> The dashboard boundary holds only read-only telemetry capabilities (<code>store/14/telemetry/</code>). Any attempt to invoke <code>AdjustTemp</code> fails with <code>UnauthorizedOperation</code>.</li>
+                    <li><strong>Attempt 2: Steal the compressor controller's capability handle:</strong> <span style="color:#059669; font-weight:700;">BLOCKED.</span> The Security Kernel binds handles to specific <code>owner_boundary</code> identities. Presenting a compressor handle from the dashboard boundary triggers an uncatchable <code>UnauthorizedCaller</code> trap.</li>
+                    <li><strong>Attempt 3: Silence independent safety alarms:</strong> <span style="color:#059669; font-weight:700;">BLOCKED.</span> The alarm sentinel lives in an isolated boundary with non-delegable dispatch authority. The dashboard cannot alter its state.</li>
+                    <li><strong>Attempt 4: Cross-store privilege hopping:</strong> <span style="color:#059669; font-weight:700;">BLOCKED.</span> Capabilities are strictly prefix-scoped (e.g. <code>store/14/</code> cannot touch <code>store/22/</code>).</li>
+                    <li><strong>Attempt 5: Set catastrophic setpoints (+40°C):</strong> <span style="color:#059669; font-weight:700;">TRAPPED.</span> Non-strippable contract preconditions (<code>requires new_temp >= -25 &amp;&amp; new_temp &lt;= -15</code>) abort execution immediately.</li>
+                    <li><strong>Attempt 6: Erase logs to conceal the attack:</strong> <span style="color:#059669; font-weight:700;">DETECTED.</span> Audit logs form an append-only SHA-256 cryptographic hash chain; any modification invalidates the chain integrity immediately.</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Section 3: Blast Radius Containment -->
         <h2 class="section-heading">3. Severing Lateral Movement: Blast Radius Containment</h2>
         <p class="prose">
             In standard microservices, once an attacker finds a single vulnerability (such as an SQL injection in an internal search endpoint), they gain access to the host machine's entire database connection pool and AWS IAM role. From there, they pivot laterally to payment vaults and sensitive user tables.
         </p>
         <p class="prose">
-            ORDYN breaks this attack vector through <strong>Monotonic Attenuation</strong> inside isolated <strong>Cell Enclaves</strong>. A search handler only receives an attenuated read capability restricted to the public product catalog. Even if that specific handler contains a critical logic flaw and is fully compromised:
+            ORDYN breaks this attack vector through <strong>Owner-Bound Capabilities</strong>, <strong>Monotonic Attenuation</strong>, and <strong>Cryptographic Auditing</strong> inside isolated <strong>Boundary Sandboxes</strong>:
         </p>
         <ul style="margin-left: 24px; color: var(--text-secondary); margin-bottom: 24px; font-size: 15.5px; line-height: 1.7;">
-            <li>The attacker <strong>cannot escalate privileges</strong> to read account tables (monotonic attenuation guarantees capabilities can only shrink as they are passed down, never widen).</li>
-            <li>The attacker <strong>cannot exhaust server resources</strong> via ReDoS or infinite loops (the Fuel Governor halts the cell as soon as its instruction budget is consumed).</li>
-            <li>The attacker <strong>cannot exfiltrate data</strong> over covert sockets (no network capability was provided to that boundary).</li>
+            <li><strong>Owner-Bound Handles:</strong> Every capability handle in host kernel memory is locked to its originating boundary. Even if an attacker learns or guesses another component's 64-bit handle, cross-component invocation is trapped as <code>UnauthorizedCaller</code>.</li>
+            <li><strong>Affine / Linear Capabilities:</strong> Single-use authority tokens that transition permanently to consumed upon authorization. Replay attacks and double-spends are mathematically impossible.</li>
+            <li><strong>Time-Limited Capabilities (TTL):</strong> Operational maintenance permissions expire automatically via monotonic microsecond clocks, preventing stale credential exploitation.</li>
+            <li><strong>Delegation Depth Limits:</strong> An entity cannot delegate permissions further than authorized by its upstream boundary.</li>
+            <li><strong>Deterministic Flight Recorder:</strong> Execution traces (<code>.ordyn-trace</code>) capture every instruction step and register snapshot for deterministic forensic replay via <code>ordyn replay</code>.</li>
+            <li><strong>Cryptographic SHA-256 Audit Chain:</strong> Every access decision (Granted, Denied, Trapped) is linked into a tamper-evident cryptographic hash chain. Any in-memory tampering is mathematically detectable.</li>
+            <li><strong>Hardware Enclaves &amp; PCR0 Manifests:</strong> Confidential computing boundaries (<code>#[enclave]</code>) generate hardware attestation manifests for AMD SEV-SNP and AWS Nitro Enclaves.</li>
+            <li><strong>Resource Quotas &amp; Fuel:</strong> Infinite loops, algorithmic complexity bombs, and recursion overflows are halted deterministically by instruction fuel governors.</li>
         </ul>
 
         <!-- Section 4: Honest Boundaries -->

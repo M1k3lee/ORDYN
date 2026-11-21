@@ -51,6 +51,7 @@ pub enum EntityMember {
 pub struct CapabilityDecl {
     pub name: Ident,
     pub fields: Vec<FieldDecl>,
+    pub is_linear: bool,
     pub span: Span,
 }
 
@@ -79,8 +80,16 @@ pub struct FlowDecl {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct EnclaveSpec {
+    pub target: String,
+    pub attestation: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct BoundaryDecl {
     pub name: Ident,
+    pub enclave: Option<EnclaveSpec>,
     pub grants: Vec<GrantClause>,
     pub quota: Option<QuotaClause>,
     pub bindings: Vec<Ident>,

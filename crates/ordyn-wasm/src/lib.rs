@@ -298,7 +298,7 @@ pub unsafe extern "C" fn ordyn_execute_attack(vector_id: u32, arg_val: i64) -> *
             let forged_handle = CapHandle(if arg_val == 0 {
                 0xDEADBEEF
             } else {
-                arg_val as u32
+                arg_val as u64
             });
 
             let result = kernel.authorize(
@@ -333,7 +333,7 @@ pub unsafe extern "C" fn ordyn_execute_attack(vector_id: u32, arg_val: i64) -> *
                     "  │  Table lookup at slot index returned NULL_SLOT.".into(),
                     "  └─ Immutable binary audit entry committed: TRAPPED".into(),
                 ],
-                audit_hash: format!("0x{:x}", (forged_handle.0 as u64) ^ 0xFEEDFACEDEADBEEF),
+                audit_hash: format!("0x{:x}", forged_handle.0 ^ 0xFEEDFACEDEADBEEF),
                 bounty_claimed: false,
             })
         }

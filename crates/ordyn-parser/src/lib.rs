@@ -63,9 +63,32 @@ impl Parser {
         match self.peek() {
             TokenKind::Entity => self.parse_entity_decl().map(Declaration::Entity),
             TokenKind::Capability => self.parse_capability_decl().map(Declaration::Capability),
+            TokenKind::Linear => {
+                let linear_span = self.advance().span;
+                let mut cap = self.parse_capability_decl()?;
+                cap.is_linear = true;
+                cap.span = linear_span.merge(cap.span);
+                Ok(Declaration::Capability(cap))
+            }
             TokenKind::Contract => self.parse_contract_decl().map(Declaration::Contract),
             TokenKind::Flow => self.parse_flow_decl().map(Declaration::Flow),
             TokenKind::Boundary => self.parse_boundary_decl().map(Declaration::Boundary),
+            TokenKind::Enclave => {
+                let enc_span = self.advance().span;
+                let mut b = self.parse_boundary_decl()?;
+                b.enclave = Some(ordyn_ast::EnclaveSpec {
+                    target: "sev-snp".to_string(),
+                    attestation: "hardware".to_string(),
+                    span: enc_span,
+                });
+                Ok(Declaration::Boundary(b))
+            }
+            TokenKind::Hash => {
+                let enc = self.parse_enclave_attribute()?;
+                let mut b = self.parse_boundary_decl()?;
+                b.enclave = Some(enc);
+                Ok(Declaration::Boundary(b))
+            }
             TokenKind::Interface => self.parse_interface_decl().map(Declaration::Interface),
             TokenKind::Enum => self.parse_enum_decl(false).map(Declaration::Enum),
             TokenKind::Pub => {
@@ -173,6 +196,7 @@ impl Parser {
         Ok(CapabilityDecl {
             name,
             fields,
+            is_linear: false,
             span: start.merge(end),
         })
     }
@@ -326,10 +350,49 @@ impl Parser {
         let end = self.expect(TokenKind::RBrace)?.span;
         Ok(BoundaryDecl {
             name,
+            enclave: None,
             grants,
             quota,
             bindings,
             span: start.merge(end),
+        })
+    }
+
+    fn parse_enclave_attribute(&mut self) -> Result<ordyn_ast::EnclaveSpec, ParseError> {
+        let hash_span = self.expect(TokenKind::Hash)?.span;
+        self.expect(TokenKind::LBracket)?;
+        self.expect(TokenKind::Enclave)?;
+        let mut target = "nitro".to_string();
+        let mut attestation = "pcr".to_string();
+        if self.match_token(&TokenKind::LParen) {
+            while !self.check(&TokenKind::RParen) && !self.is_at_end() {
+                let key = self.parse_ident()?;
+                self.expect(TokenKind::Eq)?;
+                let val = match self.advance().kind {
+                    TokenKind::StringLiteral(s) => s,
+                    TokenKind::Ident(s) => s,
+                    other => {
+                        return Err(ParseError::UnexpectedToken {
+                            expected: "string literal or identifier".to_string(),
+                            found: other,
+                            span: self.previous_span(),
+                        })
+                    }
+                };
+                if key.name == "target" {
+                    target = val;
+                } else if key.name == "attestation" {
+                    attestation = val;
+                }
+                self.match_token(&TokenKind::Comma);
+            }
+            self.expect(TokenKind::RParen)?;
+        }
+        let end = self.expect(TokenKind::RBracket)?.span;
+        Ok(ordyn_ast::EnclaveSpec {
+            target,
+            attestation,
+            span: hash_span.merge(end),
         })
     }
 
@@ -1119,5 +1182,43 @@ mod tests {
         let mut parser = Parser::from_source(source).unwrap();
         let program = parser.parse_program().unwrap();
         assert_eq!(program.declarations.len(), 4);
+    }
+
+    #[test]
+    fn test_parse_linear_and_enclave() {
+        let source = r#"
+            linear capability OneTimeToken {
+                nonce: Int;
+            }
+
+            #[enclave(target = "sev-snp", attestation = "vcek")]
+            boundary SecureVault {
+                grant OneTimeToken { nonce: 12345 };
+                quota {
+                    fuel_limit: 5000;
+                }
+            }
+        "#;
+
+        let mut parser = Parser::from_source(source).unwrap();
+        let program = parser.parse_program().unwrap();
+        assert_eq!(program.declarations.len(), 2);
+
+        if let Declaration::Capability(cap) = &program.declarations[0] {
+            assert_eq!(cap.name.name, "OneTimeToken");
+            assert!(cap.is_linear);
+        } else {
+            panic!("Expected linear capability");
+        }
+
+        if let Declaration::Boundary(b) = &program.declarations[1] {
+            assert_eq!(b.name.name, "SecureVault");
+            assert!(b.enclave.is_some());
+            let enc = b.enclave.as_ref().unwrap();
+            assert_eq!(enc.target, "sev-snp");
+            assert_eq!(enc.attestation, "vcek");
+        } else {
+            panic!("Expected enclave boundary");
+        }
     }
 }

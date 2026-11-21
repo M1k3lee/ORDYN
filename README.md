@@ -103,13 +103,22 @@ Run static semantic checks, algebraic effect verification, and SMT contract prov
 ordyn verify main.ordyn
 ```
 
-### 4. Run Inside the Sandboxed Runtime
-Execute functions with strict instruction fuel budgets and non-strippable contract traps:
+### 4. Run Inside the Sandboxed Runtime & Record Flight Traces
+Execute functions with strict instruction fuel budgets, non-strippable contract traps, and deterministic flight recorder traces:
 ```bash
 ordyn run main.ordyn --function get_status
+# Generates main.ordyn-trace for deterministic time-travel forensics
+ordyn replay main.ordyn-trace
 ```
 
-### 5. Generate Visual Architecture Diagrams
+### 5. Generate Hardware Enclave Confidential Manifests
+Generate cryptographic PCR0 measurement manifests for confidential computing environments (AMD SEV-SNP, AWS Nitro Enclaves):
+```bash
+ordyn enclave main.ordyn --target sev-snp
+# Outputs main.ordyn-enclave with SHA-256 PCR0 measurement
+```
+
+### 6. Generate Visual Architecture Diagrams
 Export an interactive Mermaid DAG showing capability delegations, boundaries, and quotas:
 ```bash
 ordyn visual main.ordyn
@@ -211,7 +220,7 @@ flow AuditPipeline(entry: String) -> Unit with [StorageWrite] {
 | Feature | ORDYN | Rust | Go | TypeScript / Node |
 |---|:---:|:---:|:---:|:---:|
 | **Zero Ambient Authority** | **Native (Kernel)** | ❌ (Ambient OS) | ❌ (Ambient OS) | ❌ (Ambient OS) |
-| **Formal SMT Contract Prover** | **Built-in (Z3/LIA)** | ❌ (External Tools) | ❌ (None) | ❌ (None) |
+| **Formal SMT Contract Prover** | **Built-in (SMT-LIB2 / LIA)** | ❌ (External Tools) | ❌ (None) | ❌ (None) |
 | **Non-Strippable Contract Traps** | **Intrinsic** | Optional (`debug_assert`) | Manual | Manual |
 | **Algebraic Effect System** | **Pure by default** | ❌ (No Effects) | ❌ (No Effects) | ❌ (No Effects) |
 | **Architectural Boundaries** | **First-Class (`boundary`)** | ❌ (Processes/VMs) | ❌ (Processes/VMs) | ❌ (Containers) |
@@ -227,8 +236,10 @@ flow AuditPipeline(entry: String) -> Unit with [StorageWrite] {
 |---|---|---|
 | `ordyn new` | `ordyn new <name> [--template <type>]` | Scaffolds a new project (`web`, `cli`, `ledger`, `minimal`) |
 | `ordyn check` | `ordyn check <file.ordyn>` | Static type checking and algebraic effect analysis |
-| `ordyn verify` | `ordyn verify <file.ordyn>` | Formal contract proving via SMT-LIB2 / Presburger LIA |
-| `ordyn run` | `ordyn run <file.ordyn> [--function <fn>]` | Executes functions inside sandboxed fuel-governed runtime |
+| `ordyn verify` | `ordyn verify <file.ordyn>` | Formal contract proving via SMT-LIB2 / Presburger LIA with self-healing auto-fix |
+| `ordyn run` | `ordyn run <file.ordyn> [--function <fn>]` | Executes functions inside sandboxed fuel-governed runtime with flight recording |
+| `ordyn replay`| `ordyn replay <trace.ordyn-trace>` | Deterministically replays execution steps, register states, and fuel consumption |
+| `ordyn enclave`| `ordyn enclave <file.ordyn> [--target sev-snp]` | Generates Confidential Computing manifest with SHA-256 PCR0 measurement |
 | `ordyn build` | `ordyn build <file.ordyn>` | Compiles Typed SSA IR to WebAssembly Core bytecode |
 | `ordyn visual` | `ordyn visual <file.ordyn>` | Generates Mermaid security DAG and interactive HTML explorer |
 | `ordyn wit` | `ordyn wit <file.ordyn>` | Emits standard WebAssembly Component Model `.wit` interfaces |

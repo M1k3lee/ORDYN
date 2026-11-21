@@ -16,3 +16,6 @@ ordyn-guard = { path = "../ordyn-guard" }
 ordyn-runtime = { path = "../ordyn-runtime" }
 thiserror.workspace = true
 miette.workspace = true
+
+[dev-dependencies]
+ordyn-prover = { path = "../ordyn-prover" }

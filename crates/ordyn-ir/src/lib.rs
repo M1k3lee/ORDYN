@@ -121,10 +121,21 @@ pub struct IrEntity {
     pub methods: Vec<IrFunction>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct IrBoundary {
+    pub name: String,
+    pub enclave: Option<String>,
+    pub grants: Vec<String>,
+    pub bindings: Vec<String>,
+    pub fuel_limit: Option<u64>,
+    pub memory_limit: Option<u64>,
+}
+
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct IrModule {
     pub functions: Vec<IrFunction>,
     pub entities: Vec<IrEntity>,
+    pub boundaries: Vec<IrBoundary>,
 }
 
 pub struct IrLowerer {
@@ -179,6 +190,28 @@ impl IrLowerer {
                         name: entity.name.name.clone(),
                         fields,
                         methods,
+                    });
+                }
+                Declaration::Boundary(boundary) => {
+                    let grants = boundary
+                        .grants
+                        .iter()
+                        .map(|g| g.capability_name.name.clone())
+                        .collect();
+                    let bindings = boundary.bindings.iter().map(|b| b.name.clone()).collect();
+                    let (fuel_limit, memory_limit) = if let Some(ref q) = boundary.quota {
+                        (q.fuel_limit, q.memory_limit)
+                    } else {
+                        (None, None)
+                    };
+                    let enclave = boundary.enclave.as_ref().map(|e| e.target.clone());
+                    module.boundaries.push(IrBoundary {
+                        name: boundary.name.name.clone(),
+                        enclave,
+                        grants,
+                        bindings,
+                        fuel_limit,
+                        memory_limit,
                     });
                 }
                 _ => {}

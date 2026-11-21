@@ -14,6 +14,7 @@ pub enum VerificationResult {
     Falsified {
         counterexample: HashMap<String, i64>,
         explanation: String,
+        suggested_fix: Option<String>,
     },
     /// Indeterminate: complex/non-linear arithmetic or dynamic state.
     /// Preserved as non-strippable runtime assertion.
@@ -280,6 +281,7 @@ impl ContractProver {
                                     "When {} = {}, condition ({} > {}) fails",
                                     v, low, low, k
                                 ),
+                                suggested_fix: Some(format!("requires {} > {}", v, k)),
                             };
                         }
                     }
@@ -324,6 +326,7 @@ impl ContractProver {
                                 "Without precondition ({} >= {}), balance deduction results in negative value",
                                 b_var, a_var
                             ),
+                            suggested_fix: Some(format!("requires {} >= {}", b_var, a_var)),
                         };
                     }
                 }
@@ -407,8 +410,13 @@ mod tests {
 
         let res = ContractProver::verify_contract(&[pre], &target);
         match res {
-            VerificationResult::Falsified { counterexample, .. } => {
+            VerificationResult::Falsified {
+                counterexample,
+                suggested_fix,
+                ..
+            } => {
                 assert_eq!(counterexample.get("x"), Some(&1));
+                assert_eq!(suggested_fix, Some("requires x > 5".to_string()));
             }
             _ => panic!("Expected counterexample to be found!"),
         }

@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Direct AI Agents and LLMs to structured context
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# Explicit allowances for leading AI search engines
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://m1k3lee.github.io/ORDYN/sitemap.xml

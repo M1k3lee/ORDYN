@@ -53,6 +53,8 @@ pub enum TokenKind {
     Grant,
     Quota,
     Bind,
+    Linear,
+    Enclave,
 
     // Identifiers & Literals
     Ident(String),
@@ -71,6 +73,7 @@ pub enum TokenKind {
     Colon,     // :
     Semicolon, // ;
     Dot,       // .
+    Hash,      // #
     Arrow,     // ->
     FatArrow,  // =>
 
@@ -172,6 +175,10 @@ impl<'a> Lexer<'a> {
                 '.' => {
                     self.bump();
                     TokenKind::Dot
+                }
+                '#' => {
+                    self.bump();
+                    TokenKind::Hash
                 }
                 '+' => {
                     self.bump();
@@ -438,6 +445,8 @@ impl<'a> Lexer<'a> {
             "grant" => TokenKind::Grant,
             "quota" => TokenKind::Quota,
             "bind" => TokenKind::Bind,
+            "linear" => TokenKind::Linear,
+            "enclave" => TokenKind::Enclave,
             ident => TokenKind::Ident(ident.to_string()),
         }
     }
@@ -489,5 +498,19 @@ mod tests {
         let lexer = Lexer::new(input);
         let result = lexer.tokenize();
         assert!(matches!(result, Err(LexError::UnterminatedString { .. })));
+    }
+
+    #[test]
+    fn test_lex_linear_enclave_hash() {
+        let input = "#[enclave(target = \"sev\")] linear capability SingleUse;";
+        let lexer = Lexer::new(input);
+        let tokens = lexer.tokenize().unwrap();
+        assert_eq!(tokens[0].kind, TokenKind::Hash);
+        assert_eq!(tokens[1].kind, TokenKind::LBracket);
+        assert_eq!(tokens[2].kind, TokenKind::Enclave);
+        assert_eq!(tokens[3].kind, TokenKind::LParen);
+        // ...
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Linear));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Capability));
     }
 }

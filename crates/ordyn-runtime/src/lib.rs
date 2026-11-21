@@ -123,24 +123,174 @@ impl ExecutionContext {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct BoundaryInstance {
+    pub name: String,
+    pub fuel_limit: u64,
+    pub used_fuel: u64,
+    pub capabilities: HashMap<String, CapHandle>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TraceStep {
+    pub step: u64,
+    pub block_id: usize,
+    pub instruction: String,
+    pub registers: HashMap<u32, i64>,
+    pub fuel_remaining: u64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FlightTrace {
+    pub function_name: String,
+    pub initial_args: Vec<i64>,
+    pub steps: Vec<TraceStep>,
+    pub status: String,
+    pub return_value: Option<i64>,
+}
+
+impl FlightTrace {
+    pub fn step_at(&self, idx: usize) -> Option<&TraceStep> {
+        self.steps.get(idx)
+    }
+
+    pub fn total_steps(&self) -> usize {
+        self.steps.len()
+    }
+
+    pub fn export_json(&self) -> String {
+        let mut json = String::from("{\n");
+        json.push_str(&format!(
+            "  \"function_name\": \"{}\",\n",
+            self.function_name
+        ));
+        json.push_str(&format!("  \"status\": \"{}\",\n", self.status));
+        if let Some(ret) = self.return_value {
+            json.push_str(&format!("  \"return_value\": {},\n", ret));
+        } else {
+            json.push_str("  \"return_value\": null,\n");
+        }
+        json.push_str(&format!("  \"total_steps\": {},\n", self.steps.len()));
+        json.push_str("  \"steps\": [\n");
+        for (i, step) in self.steps.iter().enumerate() {
+            let comma = if i + 1 < self.steps.len() { "," } else { "" };
+            json.push_str(&format!(
+                "    {{\"step\": {}, \"block\": {}, \"instruction\": \"{}\", \"fuel_remaining\": {}}}{}\n",
+                step.step,
+                step.block_id,
+                step.instruction.replace('\"', "\\\""),
+                step.fuel_remaining,
+                comma
+            ));
+        }
+        json.push_str("  ]\n");
+        json.push_str("}\n");
+        json
+    }
+}
+
 pub struct SandboxRuntime {
     context: ExecutionContext,
     module: IrModule,
+    boundary_instances: HashMap<String, BoundaryInstance>,
+    entity_to_boundary: HashMap<String, String>,
+    entity_state: HashMap<String, HashMap<String, i64>>,
+    flight_recorder_enabled: bool,
+    last_trace: Option<FlightTrace>,
 }
 
 impl SandboxRuntime {
     pub fn new(module: IrModule, fuel_limit: u64, max_memory_pages: u32) -> Self {
-        Self {
-            context: ExecutionContext::new(fuel_limit, max_memory_pages),
-            module,
+        let mut context = ExecutionContext::new(fuel_limit, max_memory_pages);
+        let mut entity_to_boundary = HashMap::new();
+        let mut boundary_instances = HashMap::new();
+
+        for b in &module.boundaries {
+            let mut caps = HashMap::new();
+            for grant in &b.grants {
+                let cap = context.security_kernel.issue_root_capability_for(
+                    &b.name,
+                    grant,
+                    &["Invoke", "Read", "Write", grant.as_str()],
+                    &format!("{}/", b.name),
+                );
+                caps.insert(grant.clone(), cap);
+            }
+            for binding in &b.bindings {
+                entity_to_boundary.insert(binding.clone(), b.name.clone());
+            }
+            boundary_instances.insert(
+                b.name.clone(),
+                BoundaryInstance {
+                    name: b.name.clone(),
+                    fuel_limit: b.fuel_limit.unwrap_or(fuel_limit),
+                    used_fuel: 0,
+                    capabilities: caps,
+                },
+            );
         }
+
+        Self {
+            context,
+            module,
+            boundary_instances,
+            entity_to_boundary,
+            entity_state: HashMap::new(),
+            flight_recorder_enabled: true,
+            last_trace: None,
+        }
+    }
+
+    pub fn enable_flight_recorder(&mut self, enabled: bool) {
+        self.flight_recorder_enabled = enabled;
+    }
+
+    pub fn last_trace(&self) -> Option<&FlightTrace> {
+        self.last_trace.as_ref()
     }
 
     pub fn security_kernel_mut(&mut self) -> &mut SecurityKernel {
         &mut self.context.security_kernel
     }
 
+    pub fn boundary_instance(&self, name: &str) -> Option<&BoundaryInstance> {
+        self.boundary_instances.get(name)
+    }
+
+    pub fn entity_boundary(&self, entity_name: &str) -> Option<&str> {
+        self.entity_to_boundary.get(entity_name).map(|s| s.as_str())
+    }
+
     pub fn execute_function(&mut self, func_name: &str, args: &[i64]) -> Result<i64, RuntimeError> {
+        let mut steps = Vec::new();
+        let mut step_counter: u64 = 0;
+
+        let result = self.execute_function_internal(func_name, args, &mut steps, &mut step_counter);
+
+        if self.flight_recorder_enabled {
+            let (status, return_val) = match &result {
+                Ok(val) => ("Success".to_string(), Some(*val)),
+                Err(err) => (format!("Trapped: {}", err), None),
+            };
+            self.last_trace = Some(FlightTrace {
+                function_name: func_name.to_string(),
+                initial_args: args.to_vec(),
+                steps,
+                status,
+                return_value: return_val,
+            });
+        }
+
+        result
+    }
+
+    fn execute_function_internal(
+        &mut self,
+        func_name: &str,
+        args: &[i64],
+        steps: &mut Vec<TraceStep>,
+        step_counter: &mut u64,
+    ) -> Result<i64, RuntimeError> {
         let function =
             self.find_function(func_name)
                 .ok_or_else(|| RuntimeError::FunctionNotFound {
@@ -170,6 +320,22 @@ impl SandboxRuntime {
 
             for inst in &block.instructions {
                 self.context.consume_fuel(1)?;
+
+                if self.flight_recorder_enabled {
+                    *step_counter += 1;
+                    let reg_snapshot: HashMap<u32, i64> =
+                        registers.iter().map(|(r, v)| (r.0, *v)).collect();
+                    steps.push(TraceStep {
+                        step: *step_counter,
+                        block_id: current_block_id,
+                        instruction: format!("{:?}", inst),
+                        registers: reg_snapshot,
+                        fuel_remaining: self
+                            .context
+                            .fuel_limit
+                            .saturating_sub(self.context.used_fuel),
+                    });
+                }
 
                 match inst {
                     Instruction::Assign(dest, op) => {
@@ -232,14 +398,69 @@ impl SandboxRuntime {
                         operation,
                         resource,
                     } => {
-                        let h = self.eval_operand(handle, &registers) as u32;
-                        let res_str = format!("{:?}", resource);
+                        let mut h = self.eval_operand(handle, &registers) as u64;
+                        let res_str = match resource {
+                            Operand::ConstString(s) => s.clone(),
+                            _ => format!("{:?}", resource),
+                        };
+
+                        // Determine caller boundary name
+                        let caller_boundary = if let Some((entity, _)) = func_name.split_once('_') {
+                            self.entity_to_boundary.get(entity).cloned()
+                        } else {
+                            self.entity_to_boundary.get(func_name).cloned()
+                        };
+
+                        let caller_id = caller_boundary.as_deref().unwrap_or(func_name);
+
+                        // Contextual Capability Auto-Injection:
+                        // If caller provided handle == 0, auto-resolve capability from enclosing boundary!
+                        if h == 0 {
+                            if let Some(b_name) = &caller_boundary {
+                                if let Some(b_inst) = self.boundary_instances.get(b_name) {
+                                    if let Some(cap) = b_inst.capabilities.get(operation) {
+                                        h = cap.0;
+                                    } else if let Some((_, first_cap)) =
+                                        b_inst.capabilities.iter().next()
+                                    {
+                                        h = first_cap.0;
+                                    }
+                                }
+                            }
+                        }
+
                         self.context
                             .security_kernel
-                            .authorize(func_name, CapHandle(h), operation, &res_str)
+                            .authorize(caller_id, CapHandle(h), operation, &res_str)
                             .map_err(|e| {
                                 RuntimeError::Trap(format!("Capability check failed: {}", e))
                             })?;
+                    }
+                    Instruction::StoreField {
+                        target,
+                        field,
+                        value,
+                    } => {
+                        let target_id = format!("{:?}", target);
+                        let val = self.eval_operand(value, &registers);
+                        self.entity_state
+                            .entry(target_id)
+                            .or_default()
+                            .insert(field.clone(), val);
+                    }
+                    Instruction::LoadField {
+                        dest,
+                        target,
+                        field,
+                    } => {
+                        let target_id = format!("{:?}", target);
+                        let val = self
+                            .entity_state
+                            .get(&target_id)
+                            .and_then(|f| f.get(field))
+                            .copied()
+                            .unwrap_or(0);
+                        registers.insert(*dest, val);
                     }
                     _ => {}
                 }
@@ -353,6 +574,7 @@ mod tests {
         let module = IrModule {
             functions: vec![func],
             entities: Vec::new(),
+            boundaries: Vec::new(),
         };
 
         let mut runtime = SandboxRuntime::new(module, 100, 16);
@@ -385,11 +607,167 @@ mod tests {
         let module = IrModule {
             functions: vec![func],
             entities: Vec::new(),
+            boundaries: Vec::new(),
         };
 
         // Fuel limit of 10 instructions
         let mut runtime = SandboxRuntime::new(module, 10, 16);
         let err = runtime.execute_function("infinite_loop", &[]).unwrap_err();
         assert!(matches!(err, RuntimeError::FuelExhausted { .. }));
+    }
+
+    #[test]
+    fn test_runtime_boundary_isolation_and_field_persistence() {
+        let boundary = IrBoundary {
+            name: "VaultBoundary".to_string(),
+            enclave: None,
+            grants: vec!["StorageWrite".to_string()],
+            bindings: vec!["VaultEntity".to_string()],
+            fuel_limit: Some(500),
+            memory_limit: Some(10),
+        };
+
+        let block = BasicBlock {
+            id: 0,
+            instructions: vec![
+                Instruction::StoreField {
+                    target: Operand::Reg(Reg(0)),
+                    field: "balance".to_string(),
+                    value: Operand::ConstInt(1000),
+                },
+                Instruction::LoadField {
+                    dest: Reg(1),
+                    target: Operand::Reg(Reg(0)),
+                    field: "balance".to_string(),
+                },
+            ],
+            terminator: Terminator::Return(Some(Operand::Reg(Reg(1)))),
+        };
+
+        let func = IrFunction {
+            name: "VaultEntity::deposit".to_string(),
+            params: vec![("self".to_string(), IrType::OpaqueHandle)],
+            return_type: IrType::Int,
+            blocks: vec![block],
+        };
+
+        let module = IrModule {
+            functions: vec![func],
+            entities: Vec::new(),
+            boundaries: vec![boundary],
+        };
+
+        let mut runtime = SandboxRuntime::new(module, 1000, 16);
+        assert_eq!(
+            runtime.entity_boundary("VaultEntity"),
+            Some("VaultBoundary")
+        );
+        let b = runtime.boundary_instance("VaultBoundary").unwrap();
+        assert!(b.capabilities.contains_key("StorageWrite"));
+
+        let res = runtime
+            .execute_function("VaultEntity::deposit", &[])
+            .unwrap();
+        assert_eq!(res, 1000);
+    }
+
+    #[test]
+    fn test_deterministic_flight_recorder_and_step_inspection() {
+        let block = BasicBlock {
+            id: 0,
+            instructions: vec![
+                Instruction::Assign(Reg(1), Operand::ConstInt(10)),
+                Instruction::Assign(Reg(2), Operand::ConstInt(20)),
+                Instruction::Binary(
+                    Reg(3),
+                    IrBinaryOp::Add,
+                    Operand::Reg(Reg(1)),
+                    Operand::Reg(Reg(2)),
+                ),
+            ],
+            terminator: Terminator::Return(Some(Operand::Reg(Reg(3)))),
+        };
+
+        let func = IrFunction {
+            name: "calculate".to_string(),
+            params: vec![],
+            return_type: IrType::Int,
+            blocks: vec![block],
+        };
+
+        let module = IrModule {
+            functions: vec![func],
+            entities: Vec::new(),
+            boundaries: Vec::new(),
+        };
+
+        let mut runtime = SandboxRuntime::new(module, 100, 16);
+        let res = runtime.execute_function("calculate", &[]).unwrap();
+        assert_eq!(res, 30);
+
+        let trace = runtime.last_trace().expect("flight trace must be present");
+        assert_eq!(trace.status, "Success");
+        assert_eq!(trace.return_value, Some(30));
+        assert_eq!(trace.total_steps(), 3);
+
+        // Step 1 check
+        let step1 = trace.step_at(0).unwrap();
+        assert_eq!(step1.step, 1);
+
+        // Step 3 check
+        let step3 = trace.step_at(2).unwrap();
+        assert_eq!(step3.step, 3);
+        assert_eq!(step3.registers.get(&1), Some(&10));
+        assert_eq!(step3.registers.get(&2), Some(&20));
+
+        let json = trace.export_json();
+        assert!(json.contains("\"function_name\": \"calculate\""));
+        assert!(json.contains("\"total_steps\": 3"));
+    }
+
+    #[test]
+    fn test_contextual_capability_auto_injection() {
+        let boundary = IrBoundary {
+            name: "SupermarketChillerBoundary".to_string(),
+            enclave: None,
+            grants: vec!["AdjustTemp".to_string()],
+            bindings: vec!["ChillerController".to_string()],
+            fuel_limit: Some(1000),
+            memory_limit: Some(16),
+        };
+
+        // Capability check passes handle 0 (unspecified by caller)
+        let block = BasicBlock {
+            id: 0,
+            instructions: vec![
+                Instruction::CapabilityCheck {
+                    handle: Operand::ConstInt(0), // 0 means auto-inject from boundary!
+                    operation: "AdjustTemp".to_string(),
+                    resource: Operand::ConstString("SupermarketChillerBoundary/unit4".to_string()),
+                },
+                Instruction::Assign(Reg(0), Operand::ConstInt(42)),
+            ],
+            terminator: Terminator::Return(Some(Operand::Reg(Reg(0)))),
+        };
+
+        let func = IrFunction {
+            name: "ChillerController_adjust".to_string(),
+            params: vec![],
+            return_type: IrType::Int,
+            blocks: vec![block],
+        };
+
+        let module = IrModule {
+            functions: vec![func],
+            entities: Vec::new(),
+            boundaries: vec![boundary],
+        };
+
+        let mut runtime = SandboxRuntime::new(module, 1000, 16);
+        // The runtime should auto-inject the SupermarketChillerBoundary's AdjustTemp capability!
+        let res = runtime
+            .execute_function("ChillerController_adjust", &[])
+            .unwrap();
+        assert_eq!(res, 42);
     }
 }
